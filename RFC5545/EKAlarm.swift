@@ -34,13 +34,6 @@ extension EKAlarm {
     func rfc5545(uid: String? = nil) -> [String] {
         var lines: [String] = ["BEGIN:VALARM"]
 
-        // https://tools.ietf.org/html/rfc5545#section-3.8.4.7
-        if let uid = uid {
-            lines.append("UID:\(uid)")
-        } else {
-            lines.append("UID:\(NSUUID().UUIDString)")
-        }
-
         // https://tools.ietf.org/html/rfc5545#section-3.8.6.3
         if let date = absoluteDate {
             lines.append("TRIGGER;VALUE=DATE-TIME:\(date.rfc5545(format: .day)))")
