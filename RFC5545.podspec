@@ -27,7 +27,7 @@ Converts back and forth between RFC5545 specification (iCalendar/.ics) and Apple
   # s.watchos.deployment_target = "2.0"
   # s.tvos.deployment_target = "9.0"
 
-  s.source       = { :git => "https://github.com/GargoyleSoft/RFC5545.git", :tag => "#{s.version}" }
+  s.source       = { :git => "https://github.com/GargoyleSoft/RFC5545.git", :tag => "v#{s.version}" }
 
   s.source_files  = "RFC5545"
 end
