@@ -143,7 +143,11 @@ public extension EKEvent {
 
         // https://tools.ietf.org/html/rfc5545#section-3.8.4.6
         if let url = URL, let path = url.path {
-            lines.append("URL:\(escapeText(path))")
+            // Apple will actually give us a non-null URL which is empty!
+            let trimmed = path.stringByTrimmingCharactersInSet(ws)
+            if !trimmed.isEmpty {
+                lines.append("URL:\(escapeText(trimmed))")
+            }
         }
 
         if let recurrenceRules = recurrenceRules {
