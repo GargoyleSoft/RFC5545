@@ -15,7 +15,7 @@ Converts back and forth between RFC5545 specification (iCalendar/.ics) and Apple
 
   s.homepage     = "https://github.com/GargoyleSoft/RFC5545"
 
-  s.license      = "MIT"
+  s.license      = { :type => "MIT", :file => 'LICENSE' }
 
   s.author             = { "Gargoyle Software, LLC" => "" }
 

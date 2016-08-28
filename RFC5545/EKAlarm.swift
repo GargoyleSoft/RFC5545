@@ -45,9 +45,13 @@ extension EKAlarm {
         if let date = absoluteDate {
             lines.append("TRIGGER;VALUE=DATE-TIME:\(date.rfc5545(format: .day)))")
         } else {
-            let offset = Int(relativeOffset)
+            var offset = Int(relativeOffset)
 
-            var str = offset < 0 ? "-" : ""
+            var str = ""
+            if offset < 0 {
+                str = "-"
+                offset *= -1
+            }
 
             let week = 604_800
 

@@ -81,7 +81,7 @@ public extension EKEvent {
      *
      * - SeeAlso: [RFC5545 UID](https://tools.ietf.org/html/rfc5545#section-3.8.4.7)
      */
-    public func rfc5545(uid: String? = nil) -> String {
+    public func rfc5545(uid uid: String? = nil) -> String {
         var lines: [String] = ["BEGIN:VEVENT"]
 
         // https://tools.ietf.org/html/rfc5545#section-3.8.4.7
@@ -133,21 +133,17 @@ public extension EKEvent {
 
         // https://tools.ietf.org/html/rfc5545#section-3.8.1.7
         if let location = location?.stringByTrimmingCharactersInSet(ws) where !location.isEmpty {
-            lines.append("LOCATION:\(location)")
+            lines.append("LOCATION:\(escapeText(location))")
 
             if let structuredLocation = structuredLocation, let geo = structuredLocation.geoLocation {
                 lines.append("X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:AUTOMATIC")
-                lines.append("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\(location);X-APPLE-RADIUS=\(structuredLocation.radius);X-TITLE=\(structuredLocation.title):geo:\(geo.coordinate.latitude),\(geo.coordinate.longitude)")
+                lines.append("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\(escapeText(location));X-APPLE-RADIUS=\(structuredLocation.radius);X-TITLE=\(escapeText(structuredLocation.title)):geo:\(geo.coordinate.latitude),\(geo.coordinate.longitude)")
             }
         }
 
         // https://tools.ietf.org/html/rfc5545#section-3.8.4.6
         if let url = URL, let path = url.path {
-            var str = "URL:\(escapeText(path))"
-            if let parameterString = url.parameterString {
-                str += ";\(parameterString)"
-            }
-            lines.append(str)
+            lines.append("URL:\(escapeText(path))")
         }
 
         if let recurrenceRules = recurrenceRules {
