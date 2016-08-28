@@ -184,8 +184,8 @@ public extension EKEvent {
     /// - Parameter calendar: The `EKCalendar` to use for the event.
     /// - Returns: A tuple containing the created event, as well as a list of dates which should be excluded if the event is recurring.
     /// - Throws: An `RFC5545Exception`
-    public func parseRfc5545(text: String, store: EKEventStore, calendar: EKCalendar? = nil) throws -> (event: EKEvent, exclusions: [NSDate]?) {
-        let rfc = try RFC5545(string: text)
+    public func parse(rfc5545: String, store: EKEventStore, calendar: EKCalendar? = nil) throws -> (event: EKEvent, exclusions: [NSDate]?) {
+        let rfc = try RFC5545(string: rfc5545)
         
         return (event: rfc.EKEvent(store, calendar: calendar), exclusions: rfc.exclusions)
     }

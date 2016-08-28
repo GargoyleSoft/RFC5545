@@ -36,7 +36,7 @@ public enum RFC5545Exception : ErrorType {
 
 /// An object representing an RFC5545 compatible date.  The full RFC5545 spec is *not* implemented here.
 /// This only represents those properties which relate to an `EKEvent`.
-public class RFC5545 {
+class RFC5545 {
     var startDate: NSDate!
     var endDate: NSDate!
     var summary: String!
@@ -48,8 +48,9 @@ public class RFC5545 {
     var allDay = false
 
     init(string: String) throws {
-        let lines = string
-            .stringByReplacingOccurrencesOfString("\r\n ", withString: "")
+        let regex = try! NSRegularExpression(pattern: "\r\n[ \t]+", options: [])
+        let lines = regex
+            .stringByReplacingMatchesInString(string, options: [], range: NSMakeRange(0, string.characters.count), withTemplate: "")
             .componentsSeparatedByString("\r\n")
 
         exclusions = []
@@ -60,30 +61,30 @@ public class RFC5545 {
 
         for line in lines {
             if line.hasPrefix("DTSTART:") || line.hasPrefix(("DTSTART;")) {
-                let dateInfo = try RFC5545.parseDateString(line)
+                let dateInfo = try parseDateString(line)
                 startDate = dateInfo.date
                 startHasTimeComponent = dateInfo.hasTimeComponent
             } else if line.hasPrefix("DTEND:") || line.hasPrefix(("DTEND;")) {
-                let dateInfo = try RFC5545.parseDateString(line)
+                let dateInfo = try parseDateString(line)
                 endDate = dateInfo.date
                 endHasTimeComponent = dateInfo.hasTimeComponent
             } else if line.hasPrefix("URL:") || line.hasPrefix(("URL;")) {
-                if let text = RFC5545.unescapeText(line, startingAt: 4) {
+                if let text = unescape(text: line, startingAt: 4) {
                     url = NSURL(string: text)
                 }
             } else if line.hasPrefix("SUMMARY:") {
                 // This is the Subject of the event
-                summary = RFC5545.unescapeText(line, startingAt: 8)
+                summary = unescape(text: line, startingAt: 8)
             } else if line.hasPrefix("DESCRIPTION:") {
                 // This is the Notes of the event.
-                notes = RFC5545.unescapeText(line, startingAt: 12)
+                notes = unescape(text: line, startingAt: 12)
             } else if line.hasPrefix("LOCATION:") {
-                location = RFC5545.unescapeText(line, startingAt: 9)
+                location = unescape(text: line, startingAt: 9)
             } else if line.hasPrefix("RRULE:") {
-                let rule = try RFC5545.parseRecurrenceRule(line)
+                let rule = try parseRecurrenceRule(line)
                 recurrenceRules!.append(rule)
             } else if line.hasPrefix("EXDATE:") || line.hasPrefix("EXDATE;") {
-                let dateInfo = try RFC5545.parseDateString(line)
+                let dateInfo = try parseDateString(line)
                 exclusions!.append(dateInfo.date)
             }
         }
@@ -129,7 +130,7 @@ public class RFC5545 {
     /// - Parameter startingAt: The position in the string to start unescaping.
     /// - SeeAlso: [RFC5545 TEXT](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.11)
     /// - Returns: The unescaped text or `nil` if there is no text after the indicated start position.
-    private static func unescapeText(text: String, startingAt: Int) -> String? {
+    private func unescape(text text: String, startingAt: Int) -> String? {
         guard text.characters.count > startingAt else { return nil }
 
         return text
@@ -145,7 +146,7 @@ public class RFC5545 {
     /// - Parameter constrain: The value that the numbers must be less than.
     /// - Parameter csv: The comma separated input data.
     /// - Returns: An array of `int` which are less than `constrain`.
-    private static func allValues(lessThan lessThan: Int, csv: String) -> [Int] {
+    private func allValues(lessThan lessThan: Int, csv: String) -> [Int] {
         var ret: [Int] = []
 
         for dayNum in csv.componentsSeparatedByString(",") {
@@ -165,7 +166,7 @@ public class RFC5545 {
     /// - SeeAlso: [RFC5545 Date](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.4)
     /// - SeeAlso: [RFC5545 Date-Time](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.5)
     /// - Note: If a time is not specified in the input, the time of the returned `NSDate` is set to noon.
-    static func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Bool) {
+    private func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Bool) {
         var dateStr: String!
         var options: [String : String] = [:]
 
@@ -261,7 +262,7 @@ public class RFC5545 {
     /// - Returns: The generated rule.
     /// - SeeAlso: [RFC5545 RRULE](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.8.5.4)
     /// - SeeAlso: [RFC5545 Recurrence Rule](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.10)
-    private static func parseRecurrenceRule(str: String) throws -> EKRecurrenceRule {
+    private func parseRecurrenceRule(str: String) throws -> EKRecurrenceRule {
         // Make sure it's not just the RRULE: part
         guard str.characters.count > 6 else { throw RFC5545Exception.InvalidRecurrenceRule }
 
@@ -310,7 +311,7 @@ public class RFC5545 {
                 guard foundUntilOrCount == false else { throw RFC5545Exception.InvalidRecurrenceRule }
 
                 do {
-                    let dateInfo = try RFC5545.parseDateString(value)
+                    let dateInfo = try parseDateString(value)
                     endDate = dateInfo.date
                 } catch {
                     // The UNITL keyword is allowed to be just a date, without the normal VALUE=DATE specifier....sigh.
@@ -381,19 +382,19 @@ public class RFC5545 {
                 }
 
             case "BYMONTHDAY":
-                daysOfTheMonth = RFC5545.allValues(lessThan: 32, csv: value)
+                daysOfTheMonth = allValues(lessThan: 32, csv: value)
 
             case "BYYEARDAY":
-                daysOfTheYear = RFC5545.allValues(lessThan: 367, csv: value)
+                daysOfTheYear = allValues(lessThan: 367, csv: value)
 
             case "BYWEEKNO":
-                weeksOfTheYear = RFC5545.allValues(lessThan: 54, csv: value)
+                weeksOfTheYear = allValues(lessThan: 54, csv: value)
 
             case "BYMONTH":
-                monthsOfTheYear = RFC5545.allValues(lessThan: 13, csv: value)
+                monthsOfTheYear = allValues(lessThan: 13, csv: value)
 
             case "BYSETPOS":
-                positions = RFC5545.allValues(lessThan: 367, csv: value)
+                positions = allValues(lessThan: 367, csv: value)
 
             case "BYSECOND", "BYMINUTE", "BYHOUR", "BYWEEKNO", "WKST":
                 throw RFC5545Exception.UnsupportedRecurrenceProperty
