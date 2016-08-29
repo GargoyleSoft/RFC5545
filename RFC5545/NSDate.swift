@@ -100,7 +100,6 @@ func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Boo
         dateStr = str
     }
 
-    let components = NSDateComponents()
 
     let needsTime: Bool
     if let value = options["VALUE"] {
@@ -112,9 +111,6 @@ func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Boo
     var year = 0
     var month = 0
     var day = 0
-    var hour = 0
-    var minute = 0
-    var second = 0
 
     var args: [CVarArgType] = []
 
@@ -125,7 +121,13 @@ func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Boo
         args.append(d)
     }
 
+    let components = NSDateComponents()
+
     if needsTime {
+        var hour = 0
+        var minute = 0
+        var second = 0
+
         withUnsafeMutablePointers(&hour, &minute, &second) {
             h, m, s in
             args.append(h)

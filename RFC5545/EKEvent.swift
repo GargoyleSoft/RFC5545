@@ -83,8 +83,6 @@ public extension EKEvent {
     public func rfc5545() -> String {
         var lines: [String] = ["BEGIN:VEVENT"]
 
-        lines += super.rfc5545Base()
-
         let dateFormat: Rfc5545DateFormat = timeZone == nil ? .floating : .utc
 
         if allDay {
@@ -109,6 +107,8 @@ public extension EKEvent {
             lines.append("RECURRENCE-ID:\(occurrenceDate.rfc5545(format: .utc))")
         }
 
+        lines += super.rfc5545Base()
+
         lines.append("END:VEVENT")
 
         return lines.map {
@@ -122,7 +122,7 @@ public extension EKEvent {
      *  - Warning: Not all RFC5545 elements are convertible.  For example, iOS can't set the Organizer, nor does it handle
      *    the WKST property to set the start of the week.
      *
-     *  - Parameter text: The block of text to parse.
+     *  - Parameter rfc5545: The block of text to parse.
      *  - Parameter store: The `EKEventStore` to use when creating the event.
      *  - Parameter calendar: The `EKCalendar` to use for the event.
      *

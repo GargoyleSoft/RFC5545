@@ -34,16 +34,12 @@ public extension EKReminder {
     public func rfc5545(calendar cal: NSCalendar? = nil) -> String {
         var lines = ["BEGIN:VTODO"]
 
-        lines += super.rfc5545Base()
-
         let calendar = cal ?? NSCalendar.currentCalendar()
 
-        if let startDateComponents = startDateComponents {
-            if startDateComponents.hour == 0 && startDateComponents.minute == 0 && startDateComponents.second == 0 {
-                // All Day
-            } else if let start = calendar.dateFromComponents(startDateComponents) {
-                lines.append("DTSTART:\(start.rfc5545(format: .utc))")
-            }
+        if let startDateComponents = startDateComponents
+            where !(startDateComponents.hour == 0 && startDateComponents.minute == 0 && startDateComponents.second == 0),
+            let start = calendar.dateFromComponents(startDateComponents) {
+            lines.append("DTSTART:\(start.rfc5545(format: .utc))")
         }
 
         if let dueDateComponents = dueDateComponents, let due = calendar.dateFromComponents(dueDateComponents) {
@@ -53,11 +49,13 @@ public extension EKReminder {
         if let completionDate = completionDate {
             lines.append("COMPLETED:\(completionDate.rfc5545(format: .utc))")
         }
-        
+
+        lines += super.rfc5545Base()
+
         lines.append("END:VTODO")
 
         return lines.map {
             foldLine($0)
-        }.joinWithSeparator("\r\n")
+            }.joinWithSeparator("\r\n")
     }
 }
