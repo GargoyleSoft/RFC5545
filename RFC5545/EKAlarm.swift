@@ -34,7 +34,7 @@ extension EKAlarm {
      *  - SeeAlso: [RFC5545 Alarm Component](https://tools.ietf.org/html/rfc5545#section-3.6.6)
      */
     func rfc5545(uid: String? = nil) -> [String] {
-        var lines: [String] = ["BEGIN:VALARM"]
+        var lines = ["BEGIN:VALARM"]
 
         // https://tools.ietf.org/html/rfc5545#section-3.8.6.3
         if let date = absoluteDate {

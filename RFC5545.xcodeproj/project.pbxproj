@@ -14,6 +14,7 @@
 		D29285681D723F8500421872 /* NSDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29285671D723F8500421872 /* NSDate.swift */; };
 		D292856A1D72427700421872 /* EKRecurrenceRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29285691D72427700421872 /* EKRecurrenceRule.swift */; };
 		D292856C1D72944300421872 /* EKParticipant.swift in Sources */ = {isa = PBXBuildFile; fileRef = D292856B1D72944300421872 /* EKParticipant.swift */; };
+		D2DB82FD1D7419D7001FE40C /* EKReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2DB82FC1D7419D7001FE40C /* EKReminder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		D29285671D723F8500421872 /* NSDate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSDate.swift; sourceTree = "<group>"; };
 		D29285691D72427700421872 /* EKRecurrenceRule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EKRecurrenceRule.swift; sourceTree = "<group>"; };
 		D292856B1D72944300421872 /* EKParticipant.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EKParticipant.swift; sourceTree = "<group>"; };
+		D2DB82FC1D7419D7001FE40C /* EKReminder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EKReminder.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 				D29285671D723F8500421872 /* NSDate.swift */,
 				D29285591D72366700421872 /* RFC5545.h */,
 				D29285631D7236B200421872 /* RFC5545.swift */,
+				D2DB82FC1D7419D7001FE40C /* EKReminder.swift */,
 			);
 			path = RFC5545;
 			sourceTree = "<group>";
@@ -152,6 +155,7 @@
 				D29285661D723F5600421872 /* EKAlarm.swift in Sources */,
 				D29285681D723F8500421872 /* NSDate.swift in Sources */,
 				D292856A1D72427700421872 /* EKRecurrenceRule.swift in Sources */,
+				D2DB82FD1D7419D7001FE40C /* EKReminder.swift in Sources */,
 				D29285621D72368000421872 /* EKEvent.swift in Sources */,
 				D292856C1D72944300421872 /* EKParticipant.swift in Sources */,
 			);
@@ -305,6 +309,7 @@
 				D29285601D72366700421872 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

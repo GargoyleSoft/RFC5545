@@ -34,7 +34,7 @@ import EventKit
  *
  *  - Returns: The escaped text.
  */
-private func escapeText(text: String) -> String {
+func escapeText(text: String) -> String {
     return text
         .stringByReplacingOccurrencesOfString("\\", withString: "\\\\")
         .stringByReplacingOccurrencesOfString(";", withString: "\\;")
@@ -51,7 +51,7 @@ private func escapeText(text: String) -> String {
  *
  *  - Returns: The folded text
  */
-private func foldLine(line: String) -> String {
+func foldLine(line: String) -> String {
     var lines: [String] = []
     var start = line.startIndex
     let endIndex = line.endIndex
@@ -88,7 +88,6 @@ public extension EKEvent {
     public func rfc5545(uid uid: String? = nil) -> String {
         var lines: [String] = ["BEGIN:VEVENT"]
 
-        // https://tools.ietf.org/html/rfc5545#section-3.8.4.7
         if let uid = uid {
             lines.append("UID:\(uid)")
         } else {
@@ -99,21 +98,13 @@ public extension EKEvent {
 
         let dateFormat: Rfc5545DateFormat = timeZone == nil ? .floating : .utc
 
-        // https://tools.ietf.org/html/rfc5545#section-3.8.7.1
         lines.append("CREATED:\(ctime.rfc5545(format: dateFormat))")
-
-        // https://tools.ietf.org/html/rfc5545#section-3.8.7.2
         lines.append("DTSTAMP:\(ctime.rfc5545(format: dateFormat))")
 
-        // https://tools.ietf.org/html/rfc5545#section-3.8.7.3
         if let lastModifiedDate = lastModifiedDate {
             lines.append("LAST-MODIFIED:\(lastModifiedDate.rfc5545(format: dateFormat))")
-        } else {
-            lines.append("LAST-MODIFIED:\(ctime.rfc5545(format: dateFormat))")
         }
 
-        // https://tools.ietf.org/html/rfc5545#section-3.8.2.4
-        // https://tools.ietf.org/html/rfc5545#section-3.8.2.2
         if allDay {
             lines.append("DTSTART;VALUE=DATE:\(startDate.rfc5545(format: .day))")
             lines.append("DTEND;VALUE=DATE:\(endDate.rfc5545(format: .day))")
@@ -126,16 +117,13 @@ public extension EKEvent {
 
         let summary = title.stringByTrimmingCharactersInSet(ws)
         if !summary.isEmpty {
-            // https://tools.ietf.org/html/rfc5545#section-3.8.1.12
             lines.append("SUMMARY:\(escapeText(summary))")
         }
 
-        // https://tools.ietf.org/html/rfc5545#section-3.8.1.5
         if let notes = notes?.stringByTrimmingCharactersInSet(ws) where !notes.isEmpty {
             lines.append("DESCRIPTION:\(escapeText(notes))")
         }
 
-        // https://tools.ietf.org/html/rfc5545#section-3.8.1.7
         if let location = location?.stringByTrimmingCharactersInSet(ws) where !location.isEmpty {
             lines.append("LOCATION:\(escapeText(location))")
 
@@ -145,7 +133,6 @@ public extension EKEvent {
             }
         }
 
-        // https://tools.ietf.org/html/rfc5545#section-3.8.4.6
         if let url = URL, let path = url.path {
             // Apple will actually give us a non-null URL which is empty!
             let trimmed = path.stringByTrimmingCharactersInSet(ws)
