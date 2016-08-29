@@ -76,25 +76,14 @@ public extension EKEvent {
     /**
      * Convert the EKEvent to an RFC5545 compliant format.
      *
-     * - Parameter uid: The UID string to use.  You **should** provide this value to be compliant with the
-     *   RFC5545 specification.  If you do not, a simple `UUID` will be used.
-     *
      * - Warning: This is not guaranteed to 100% match the `EKEvent`.  For example, iOS doesn't provide
      *   a list of the exclusions to a recurrent event.  You will somehow need to track those yourself
      *   and add them as an EXDATE entry.
-     *
-     * - SeeAlso: [RFC5545 UID](https://tools.ietf.org/html/rfc5545#section-3.8.4.7)
      */
-    public func rfc5545(uid uid: String? = nil) -> String {
+    public func rfc5545() -> String {
         var lines: [String] = ["BEGIN:VEVENT"]
 
-        lines += super.rfc5545()
-
-        if let uid = uid {
-            lines.append("UID:\(uid)")
-        } else {
-            lines.append("UID:\(NSUUID().UUIDString)")
-        }
+        lines += super.rfc5545Base()
 
         let dateFormat: Rfc5545DateFormat = timeZone == nil ? .floating : .utc
 
@@ -116,7 +105,6 @@ public extension EKEvent {
             }
         }
 
-        // Remember super already wrote out the RRULE line so don't repeat it here
         if hasRecurrenceRules && isDetached {
             lines.append("RECURRENCE-ID:\(occurrenceDate.rfc5545(format: .utc))")
         }

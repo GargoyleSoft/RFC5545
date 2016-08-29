@@ -63,15 +63,15 @@
 			isa = PBXGroup;
 			children = (
 				D29285651D723F5600421872 /* EKAlarm.swift */,
+				D2DB82FE1D74218C001FE40C /* EKCalendarItem.swift */,
 				D29285611D72368000421872 /* EKEvent.swift */,
 				D292856B1D72944300421872 /* EKParticipant.swift */,
 				D29285691D72427700421872 /* EKRecurrenceRule.swift */,
+				D2DB82FC1D7419D7001FE40C /* EKReminder.swift */,
 				D292855B1D72366700421872 /* Info.plist */,
 				D29285671D723F8500421872 /* NSDate.swift */,
 				D29285591D72366700421872 /* RFC5545.h */,
 				D29285631D7236B200421872 /* RFC5545.swift */,
-				D2DB82FC1D7419D7001FE40C /* EKReminder.swift */,
-				D2DB82FE1D74218C001FE40C /* EKCalendarItem.swift */,
 			);
 			path = RFC5545;
 			sourceTree = "<group>";

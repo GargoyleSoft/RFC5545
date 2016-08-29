@@ -25,24 +25,16 @@
 import Foundation
 import EventKit
 
-// TODO:  Move a bunch of stuff to EKCalendarItem generation and have EKReminder and EKEvent call super.rfc5545 
-
-extension EKReminder {
+public extension EKReminder {
     /**
      * Converts the `EKReminder` into an RFC5545 compatible format.
      *
      * - SeeAlso: [RFC5545 To-Do Component](https://tools.ietf.org/html/rfc5545#section-3.6.2)
      */
-    func rfc5545(uid: String? = nil, calendar cal: NSCalendar? = nil) -> [String] {
+    public func rfc5545(calendar cal: NSCalendar? = nil) -> [String] {
         var lines = ["BEGIN:VTODO"]
 
-        lines += super.rfc5545()
-
-        if let uid = uid {
-            lines.append("UID:\(escapeText(uid))")
-        } else {
-            lines.append("UID:\(escapeText(calendarItemExternalIdentifier))")
-        }
+        lines += super.rfc5545Base()
 
         let calendar = cal ?? NSCalendar.currentCalendar()
 

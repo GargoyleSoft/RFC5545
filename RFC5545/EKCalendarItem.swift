@@ -26,13 +26,14 @@ import Foundation
 import EventKit
 
 extension EKCalendarItem {
-    func rfc5545() -> [String] {
+    func rfc5545Base() -> [String] {
         var lines: [String] = []
 
         let ctime = creationDate ?? NSDate()
 
         let dateFormat: Rfc5545DateFormat = timeZone == nil ? .floating : .utc
 
+        lines.append("UID:\(escapeText(calendarItemExternalIdentifier))")
         lines.append("CREATED:\(ctime.rfc5545(format: dateFormat))")
         lines.append("DTSTAMP:\(ctime.rfc5545(format: dateFormat))")
 
