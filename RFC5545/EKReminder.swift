@@ -31,7 +31,7 @@ public extension EKReminder {
      *
      * - SeeAlso: [RFC5545 To-Do Component](https://tools.ietf.org/html/rfc5545#section-3.6.2)
      */
-    public func rfc5545(calendar cal: NSCalendar? = nil) -> [String] {
+    public func rfc5545(calendar cal: NSCalendar? = nil) -> String {
         var lines = ["BEGIN:VTODO"]
 
         lines += super.rfc5545Base()
@@ -55,7 +55,9 @@ public extension EKReminder {
         }
         
         lines.append("END:VTODO")
-        
-        return lines
+
+        return lines.map {
+            foldLine($0)
+        }.joinWithSeparator("\r\n")
     }
 }
