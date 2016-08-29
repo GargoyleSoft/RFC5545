@@ -51,11 +51,13 @@ private func allValues(lessThan lessThan: Int, csv: String) throws -> [Int] {
 }
 
 extension EKRecurrenceRule {
-    /// Converts the recurrence rule into an RFC5545 compatible format.
-    //
-    /// - Returns: The generated RFC5545 RRULE string.
-    //
-    /// - SeeAlso: [RFC5545 RRULE](https://tools.ietf.org/html/rfc5545#section-3.8.5.3)
+    /**
+     *  Converts the recurrence rule into an RFC5545 compatible format.
+     *
+     *  - Returns: The generated RFC5545 RRULE string.
+     *
+     *  - SeeAlso: [RFC5545 RRULE](https://tools.ietf.org/html/rfc5545#section-3.8.5.3)
+     */
     func rfc5545() -> String {
         let freq: String
         switch frequency {

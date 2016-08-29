@@ -25,13 +25,15 @@
 import Foundation
 import EventKit
 
-/// Escapes the TEXT type blocks to add the \ characters that as needed
-///
-/// - Parameter text: The text to escape.
-///
-/// - SeeAlso: [RFC5545 TEXT](https://tools.ietf.org/html/rfc5545#section-3.3.11)
-///
-/// - Returns: The escaped text.
+/**
+ *  Escapes the TEXT type blocks to add the \ characters that as needed
+ *
+ *  - Parameter text: The text to escape.
+ *
+ *  - SeeAlso: [RFC5545 TEXT](https://tools.ietf.org/html/rfc5545#section-3.3.11)
+ *
+ *  - Returns: The escaped text.
+ */
 private func escapeText(text: String) -> String {
     return text
         .stringByReplacingOccurrencesOfString("\\", withString: "\\\\")
@@ -40,13 +42,15 @@ private func escapeText(text: String) -> String {
         .stringByReplacingOccurrencesOfString("\n", withString: "\\n")
 }
 
-/// Folds lines longer than 75 characters
-///
-/// - Parameter line: The line to fold
-///
-/// - SeeAlso: [RFC5545 Content Lines](https://tools.ietf.org/html/rfc5545#section-3.1)
-///
-/// - Returns: The folded text
+/**
+ *  Folds lines longer than 75 characters
+ *
+ *  - Parameter line: The line to fold
+ *
+ *  - SeeAlso: [RFC5545 Content Lines](https://tools.ietf.org/html/rfc5545#section-3.1)
+ *
+ *  - Returns: The folded text
+ */
 private func foldLine(line: String) -> String {
     var lines: [String] = []
     var start = line.startIndex
@@ -175,15 +179,21 @@ public extension EKEvent {
         }.joinWithSeparator("\r\n")
     }
 
-    /// Converts the RFC5545 text block to an `EKEvent` object.
-    ///
-    /// - Warning: Not all RFC5545 elements are convertible.  For example, iOS can't set the Organizer, nor does it handle the WKST property to set
-    ///   the start of the week.
-    /// - Parameter text: The block of text to parse.
-    /// - Parameter store: The `EKEventStore` to use when creating the event.
-    /// - Parameter calendar: The `EKCalendar` to use for the event.
-    /// - Returns: A tuple containing the created event, as well as a list of dates which should be excluded if the event is recurring.
-    /// - Throws: An `RFC5545Exception`
+    /**
+     *  Converts the RFC5545 text block to an `EKEvent` object.
+     *
+     *  - Warning: Not all RFC5545 elements are convertible.  For example, iOS can't set the Organizer, nor does it handle
+     *    the WKST property to set the start of the week.
+     *
+     *  - Parameter text: The block of text to parse.
+     *  - Parameter store: The `EKEventStore` to use when creating the event.
+     *  - Parameter calendar: The `EKCalendar` to use for the event.
+     *
+     *  - Returns: A tuple containing the created event, as well as a list of dates which should be excluded if the
+     *    event is recurring.
+     *
+     *  - Throws: An `RFC5545Exception`
+     */
     public func parse(rfc5545: String, store: EKEventStore, calendar: EKCalendar? = nil) throws -> (event: EKEvent, exclusions: [NSDate]?) {
         let rfc = try RFC5545(string: rfc5545)
         

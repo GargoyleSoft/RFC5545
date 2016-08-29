@@ -26,11 +26,13 @@ import Foundation
 import EventKit
 
 extension EKAlarm {
-    /// Converts the `EKAlarm` into an RFC5545 compatible format.
-    ///
-    /// - Returns: An `[String]` representing the lines of the alarm description.
-    ///
-    /// - SeeAlso: [RFC5545 Alarm Component](https://tools.ietf.org/html/rfc5545#section-3.6.6)
+    /**
+     *  Converts the `EKAlarm` into an RFC5545 compatible format.
+     *
+     *  - Returns: An `[String]` representing the lines of the alarm description.
+     *
+     *  - SeeAlso: [RFC5545 Alarm Component](https://tools.ietf.org/html/rfc5545#section-3.6.6)
+     */
     func rfc5545(uid: String? = nil) -> [String] {
         var lines: [String] = ["BEGIN:VALARM"]
 

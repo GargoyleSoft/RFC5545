@@ -34,102 +34,6 @@ public enum RFC5545Exception : ErrorType {
     case UnsupportedRecurrenceProperty
 }
 
-/// Parses a date string and determines whether or not it includes a time component.
-///
-/// - Parameter str: The date string to parse.
-/// - Returns: A tuple containing the `NSDate` as well as a `Bool` specifying whether or not there is a time component.
-/// - Throws: `RFC5545Exception.InvalidDateFormat`: The date is not in a correct format.
-/// - SeeAlso: [RFC5545 Date](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.4)
-/// - SeeAlso: [RFC5545 Date-Time](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.5)
-/// - Note: If a time is not specified in the input, the time of the returned `NSDate` is set to noon.
-func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Bool) {
-    var dateStr: String!
-    var options: [String : String] = [:]
-
-    let delim = NSCharacterSet(charactersInString: ";:")
-    for param in str.componentsSeparatedByCharactersInSet(delim) {
-        let keyValuePair = param.componentsSeparatedByString("=")
-        if keyValuePair.count == 1 {
-            dateStr = keyValuePair[0]
-        } else {
-            options[keyValuePair[0]] = keyValuePair[1]
-        }
-    }
-
-    if dateStr == nil && options.isEmpty {
-        dateStr = str
-    }
-
-    let components = NSDateComponents()
-
-    let needsTime: Bool
-    if let value = options["VALUE"] {
-        needsTime = value != "DATE"
-    } else {
-        needsTime = true
-    }
-
-    var year = 0
-    var month = 0
-    var day = 0
-    var hour = 0
-    var minute = 0
-    var second = 0
-
-    var args: [CVarArgType] = []
-
-    withUnsafeMutablePointers(&year, &month, &day) {
-        y, m, d in
-        args.append(y)
-        args.append(m)
-        args.append(d)
-    }
-
-    if needsTime {
-        withUnsafeMutablePointers(&hour, &minute, &second) {
-            h, m, s in
-            args.append(h)
-            args.append(m)
-            args.append(s)
-        }
-
-        if let tzid = options["TZID"], tz = NSTimeZone(name: tzid) {
-            components.timeZone = tz
-        } else {
-            throw RFC5545Exception.InvalidDateFormat
-        }
-
-        if dateStr.characters.last! == "Z" {
-            guard components.timeZone == nil else { throw RFC5545Exception.InvalidDateFormat }
-            components.timeZone = NSTimeZone(forSecondsFromGMT: 0)
-        }
-
-        if vsscanf(dateStr, "%4d%2d%2dT%2d%2d%2d", getVaList(args)) == 6 {
-            components.year = year
-            components.month = month
-            components.day = day
-            components.hour = hour
-            components.minute = minute
-            components.second = second
-
-            if let date = NSCalendar.currentCalendar().dateFromComponents(components) {
-                return (date: date, hasTimeComponent: true)
-            }
-        }
-    } else if vsscanf(dateStr, "%4d%2d%2d", getVaList(args)) == 3 {
-        components.year = year
-        components.month = month
-        components.day = day
-
-        if let date = NSCalendar.currentCalendar().dateFromComponents(components) {
-            return (date: date, hasTimeComponent: false)
-        }
-    }
-
-    throw RFC5545Exception.InvalidDateFormat
-}
-
-
 /// An object representing an RFC5545 compatible date.  The full RFC5545 spec is *not* implemented here.
 /// This only represents those properties which relate to an `EKEvent`.
 class RFC5545 {
@@ -220,12 +124,16 @@ class RFC5545 {
         }
     }
 
-    /// Unescapes the TEXT type blocks to remove the \ characters that were added in.
-    ///
-    /// - Parameter text: The text to unescape.
-    /// - Parameter startingAt: The position in the string to start unescaping.
-    /// - SeeAlso: [RFC5545 TEXT](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.11)
-    /// - Returns: The unescaped text or `nil` if there is no text after the indicated start position.
+    /**
+     *  Unescapes the TEXT type blocks to remove the \ characters that were added in.
+     *
+     *  - Parameter text: The text to unescape.
+     *  - Parameter startingAt: The position in the string to start unescaping.
+     *
+     *  - SeeAlso: [RFC5545 TEXT](https://tools.ietf.org/html/rfc5545#section-3.3.11)
+     *
+     *  - Returns: The unescaped text or `nil` if there is no text after the indicated start position.
+     */
     private func unescape(text text: String, startingAt: Int) -> String? {
         guard text.characters.count > startingAt else { return nil }
 
@@ -237,12 +145,16 @@ class RFC5545 {
             .stringByReplacingOccurrencesOfString("\\n", withString: "\n")
     }
 
-    /// Generates an `EKEvent` from this object.
-    ///
-    /// - Parameter store: The `EKEventStore` to which the event belongs.
-    /// - Parameter calendar: The `EKCalendar` in which to create the event.
-    /// - Warning: While the RFC5545 spec allows multiple recurrence rules, iOS currently only honors the last rule.
-    /// - Returns: The created event.
+    /**
+     *  Generates an `EKEvent` from this object.
+     *
+     *  - Parameter store: The `EKEventStore` to which the event belongs.
+     *  - Parameter calendar: The `EKCalendar` in which to create the event.
+     *
+     *  - Warning: While the RFC5545 spec allows multiple recurrence rules, iOS currently only honors the last rule.
+     *
+     *  - Returns: The created event.
+     */
     func EKEvent(store: EKEventStore, calendar: EKCalendar?) -> EventKit.EKEvent {
         let event = EventKit.EKEvent(eventStore: store)
         event.startDate = startDate
