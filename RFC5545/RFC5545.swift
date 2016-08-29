@@ -34,6 +34,102 @@ public enum RFC5545Exception : ErrorType {
     case UnsupportedRecurrenceProperty
 }
 
+/// Parses a date string and determines whether or not it includes a time component.
+///
+/// - Parameter str: The date string to parse.
+/// - Returns: A tuple containing the `NSDate` as well as a `Bool` specifying whether or not there is a time component.
+/// - Throws: `RFC5545Exception.InvalidDateFormat`: The date is not in a correct format.
+/// - SeeAlso: [RFC5545 Date](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.4)
+/// - SeeAlso: [RFC5545 Date-Time](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.5)
+/// - Note: If a time is not specified in the input, the time of the returned `NSDate` is set to noon.
+func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Bool) {
+    var dateStr: String!
+    var options: [String : String] = [:]
+
+    let delim = NSCharacterSet(charactersInString: ";:")
+    for param in str.componentsSeparatedByCharactersInSet(delim) {
+        let keyValuePair = param.componentsSeparatedByString("=")
+        if keyValuePair.count == 1 {
+            dateStr = keyValuePair[0]
+        } else {
+            options[keyValuePair[0]] = keyValuePair[1]
+        }
+    }
+
+    if dateStr == nil && options.isEmpty {
+        dateStr = str
+    }
+
+    let components = NSDateComponents()
+
+    let needsTime: Bool
+    if let value = options["VALUE"] {
+        needsTime = value != "DATE"
+    } else {
+        needsTime = true
+    }
+
+    var year = 0
+    var month = 0
+    var day = 0
+    var hour = 0
+    var minute = 0
+    var second = 0
+
+    var args: [CVarArgType] = []
+
+    withUnsafeMutablePointers(&year, &month, &day) {
+        y, m, d in
+        args.append(y)
+        args.append(m)
+        args.append(d)
+    }
+
+    if needsTime {
+        withUnsafeMutablePointers(&hour, &minute, &second) {
+            h, m, s in
+            args.append(h)
+            args.append(m)
+            args.append(s)
+        }
+
+        if let tzid = options["TZID"], tz = NSTimeZone(name: tzid) {
+            components.timeZone = tz
+        } else {
+            throw RFC5545Exception.InvalidDateFormat
+        }
+
+        if dateStr.characters.last! == "Z" {
+            guard components.timeZone == nil else { throw RFC5545Exception.InvalidDateFormat }
+            components.timeZone = NSTimeZone(forSecondsFromGMT: 0)
+        }
+
+        if vsscanf(dateStr, "%4d%2d%2dT%2d%2d%2d", getVaList(args)) == 6 {
+            components.year = year
+            components.month = month
+            components.day = day
+            components.hour = hour
+            components.minute = minute
+            components.second = second
+
+            if let date = NSCalendar.currentCalendar().dateFromComponents(components) {
+                return (date: date, hasTimeComponent: true)
+            }
+        }
+    } else if vsscanf(dateStr, "%4d%2d%2d", getVaList(args)) == 3 {
+        components.year = year
+        components.month = month
+        components.day = day
+
+        if let date = NSCalendar.currentCalendar().dateFromComponents(components) {
+            return (date: date, hasTimeComponent: false)
+        }
+    }
+
+    throw RFC5545Exception.InvalidDateFormat
+}
+
+
 /// An object representing an RFC5545 compatible date.  The full RFC5545 spec is *not* implemented here.
 /// This only represents those properties which relate to an `EKEvent`.
 class RFC5545 {
@@ -81,7 +177,7 @@ class RFC5545 {
             } else if line.hasPrefix("LOCATION:") {
                 location = unescape(text: line, startingAt: 9)
             } else if line.hasPrefix("RRULE:") {
-                let rule = try parseRecurrenceRule(line)
+                let rule = try EKRecurrenceRule(rrule: line)
                 recurrenceRules!.append(rule)
             } else if line.hasPrefix("EXDATE:") || line.hasPrefix("EXDATE;") {
                 let dateInfo = try parseDateString(line)
@@ -138,288 +234,7 @@ class RFC5545 {
             .stringByReplacingOccurrencesOfString("\\;", withString: ";")
             .stringByReplacingOccurrencesOfString("\\,", withString: ",")
             .stringByReplacingOccurrencesOfString("\\\\", withString: "\\")
-    }
-
-    /// Splits the input string by comma and returns an array of all values which are less than the
-    /// constraint value.
-    ///
-    /// - Parameter constrain: The value that the numbers must be less than.
-    /// - Parameter csv: The comma separated input data.
-    /// - Returns: An array of `int` which are less than `constrain`.
-    private func allValues(lessThan lessThan: Int, csv: String) -> [Int] {
-        var ret: [Int] = []
-
-        for dayNum in csv.componentsSeparatedByString(",") {
-            if let num = Int(dayNum) where abs(num) < lessThan {
-                ret.append(num)
-            }
-        }
-
-        return ret
-    }
-
-    /// Parses a date string and determines whether or not it includes a time component.
-    ///
-    /// - Parameter str: The date string to parse.
-    /// - Returns: A tuple containing the `NSDate` as well as a `Bool` specifying whether or not there is a time component.
-    /// - Throws: `RFC5545Exception.InvalidDateFormat`: The date is not in a correct format.
-    /// - SeeAlso: [RFC5545 Date](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.4)
-    /// - SeeAlso: [RFC5545 Date-Time](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.5)
-    /// - Note: If a time is not specified in the input, the time of the returned `NSDate` is set to noon.
-    private func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Bool) {
-        var dateStr: String!
-        var options: [String : String] = [:]
-
-        let delim = NSCharacterSet(charactersInString: ";:")
-        for param in str.componentsSeparatedByCharactersInSet(delim) {
-            let keyValuePair = param.componentsSeparatedByString("=")
-            if keyValuePair.count == 1 {
-                dateStr = keyValuePair[0]
-            } else {
-                options[keyValuePair[0]] = keyValuePair[1]
-            }
-        }
-
-        if dateStr == nil && options.isEmpty {
-            dateStr = str
-        }
-
-        let components = NSDateComponents()
-
-        let needsTime: Bool
-        if let value = options["VALUE"] {
-            needsTime = value != "DATE"
-        } else {
-            needsTime = true
-        }
-
-        var year = 0
-        var month = 0
-        var day = 0
-        var hour = 0
-        var minute = 0
-        var second = 0
-
-        var args: [CVarArgType] = []
-
-        withUnsafeMutablePointers(&year, &month, &day) {
-            y, m, d in
-            args.append(y)
-            args.append(m)
-            args.append(d)
-        }
-
-        if needsTime {
-            withUnsafeMutablePointers(&hour, &minute, &second) {
-                h, m, s in
-                args.append(h)
-                args.append(m)
-                args.append(s)
-            }
-
-            if let tzid = options["TZID"], tz = NSTimeZone(name: tzid) {
-                components.timeZone = tz
-            } else {
-                throw RFC5545Exception.InvalidDateFormat
-            }
-
-            if dateStr.characters.last! == "Z" {
-                guard components.timeZone == nil else { throw RFC5545Exception.InvalidDateFormat }
-                components.timeZone = NSTimeZone(forSecondsFromGMT: 0)
-            }
-
-            if vsscanf(dateStr, "%4d%2d%2dT%2d%2d%2d", getVaList(args)) == 6 {
-                components.year = year
-                components.month = month
-                components.day = day
-                components.hour = hour
-                components.minute = minute
-                components.second = second
-
-                if let date = NSCalendar.currentCalendar().dateFromComponents(components) {
-                    return (date: date, hasTimeComponent: true)
-                }
-            }
-        } else if vsscanf(dateStr, "%4d%2d%2d", getVaList(args)) == 3 {
-            components.year = year
-            components.month = month
-            components.day = day
-
-            let calendar = NSCalendar.currentCalendar()
-            if let date = calendar.dateFromComponents(components) {
-                return (date: date, hasTimeComponent: false)
-            }
-        }
-
-        throw RFC5545Exception.InvalidDateFormat
-    }
-
-    /// Parses an RRULE pattern.
-    ///
-    /// - Parameter str: The string to parse.
-    /// - Throws: `RFC5545Exception.InvalidRecurrenceRule`
-    /// - Throws: `RFC5545Exception.UnsupportedRecurrenceProperty`
-    /// - Returns: The generated rule.
-    /// - SeeAlso: [RFC5545 RRULE](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.8.5.4)
-    /// - SeeAlso: [RFC5545 Recurrence Rule](http://google-rfc-2445.googlecode.com/svn/trunk/RFC5545.html#4.3.10)
-    private func parseRecurrenceRule(str: String) throws -> EKRecurrenceRule {
-        // Make sure it's not just the RRULE: part
-        guard str.characters.count > 6 else { throw RFC5545Exception.InvalidRecurrenceRule }
-
-        var frequency: EKRecurrenceFrequency!
-        var interval = 1
-        var endDate: NSDate!
-        var foundUntilOrCount = false
-        var count: Int?
-
-        var daysOfTheWeek: [EKRecurrenceDayOfWeek]?
-        var daysOfTheMonth: [NSNumber]?
-        var weeksOfTheYear: [NSNumber]?
-        var monthsOfTheYear: [NSNumber]?
-        var daysOfTheYear: [NSNumber]?
-        var positions: [NSNumber]?
-
-        let index = str.startIndex.advancedBy(6)
-        for part in str.substringFromIndex(index).componentsSeparatedByString(";") {
-            let keyValue = part.componentsSeparatedByString("=")
-            guard keyValue.count == 2 else { throw RFC5545Exception.InvalidRecurrenceRule }
-
-            let key = keyValue[0]
-
-            if key.lowercaseString.hasPrefix("x-") {
-                continue
-            }
-
-            let value = keyValue[1]
-
-            switch key {
-            case "FREQ":
-                switch value {
-                case "DAILY": frequency = .Daily
-                case "MONTHLY": frequency = .Monthly
-                case "WEEKLY": frequency = .Weekly
-                case "YEARLY": frequency = .Yearly
-                case "SECONDLY", "MINUTELY": break
-                default: throw RFC5545Exception.InvalidRecurrenceRule
-                }
-
-            case "INTERVAL":
-                guard let ival = Int(value) else { throw RFC5545Exception.InvalidRecurrenceRule }
-                interval = ival
-
-            case "UNTIL":
-                guard foundUntilOrCount == false else { throw RFC5545Exception.InvalidRecurrenceRule }
-
-                do {
-                    let dateInfo = try parseDateString(value)
-                    endDate = dateInfo.date
-                } catch {
-                    // The UNITL keyword is allowed to be just a date, without the normal VALUE=DATE specifier....sigh.
-                    var year = 0
-                    var month = 0
-                    var day = 0
-
-                    var args: [CVarArgType] = []
-
-                    withUnsafeMutablePointers(&year, &month, &day) {
-                        y, m, d in
-                        args.append(y)
-                        args.append(m)
-                        args.append(d)
-                    }
-
-                    if vsscanf(value, "%4d%2d%2d", getVaList(args)) == 3 {
-                        let components = NSDateComponents()
-                        components.year = year
-                        components.month = month
-                        components.day = day
-
-                        // This is bad, because we don't know the timezone...
-                        endDate = NSCalendar.currentCalendar().dateFromComponents(components)!
-                    }
-                }
-
-                if endDate == nil {
-                    throw RFC5545Exception.InvalidRecurrenceRule
-                }
-
-                foundUntilOrCount = true
-
-            case "COUNT":
-                guard foundUntilOrCount == false, let ival = Int(value) else { throw RFC5545Exception.InvalidRecurrenceRule }
-                count = ival
-
-                foundUntilOrCount = true
-
-            case "BYDAY":
-                daysOfTheWeek = []
-
-                let weekday: [String : EKWeekday] = [
-                    "SU" : .Sunday,
-                    "MO" : .Monday,
-                    "TU" : .Tuesday,
-                    "WE" : .Wednesday,
-                    "TH" : .Thursday,
-                    "FR" : .Friday,
-                    "SA" : .Saturday
-                ]
-
-                for day in value.componentsSeparatedByString(",") {
-                    let dayStr: String
-                    var num = 0
-
-                    if day.characters.count > 2 {
-                        let index = day.endIndex.advancedBy(-2)
-                        dayStr = day.substringFromIndex(index)
-                        num = Int(day.substringToIndex(index)) ?? 0
-                    } else {
-                        dayStr = day
-                    }
-
-                    if let day = weekday[dayStr] {
-                        daysOfTheWeek!.append(EKRecurrenceDayOfWeek(day, weekNumber: num))
-                    }
-                }
-
-            case "BYMONTHDAY":
-                daysOfTheMonth = allValues(lessThan: 32, csv: value)
-
-            case "BYYEARDAY":
-                daysOfTheYear = allValues(lessThan: 367, csv: value)
-
-            case "BYWEEKNO":
-                weeksOfTheYear = allValues(lessThan: 54, csv: value)
-
-            case "BYMONTH":
-                monthsOfTheYear = allValues(lessThan: 13, csv: value)
-
-            case "BYSETPOS":
-                positions = allValues(lessThan: 367, csv: value)
-
-            case "BYSECOND", "BYMINUTE", "BYHOUR", "BYWEEKNO", "WKST":
-                throw RFC5545Exception.UnsupportedRecurrenceProperty
-
-            default:
-                throw RFC5545Exception.InvalidRecurrenceRule
-            }
-        }
-
-        guard frequency != nil else { throw RFC5545Exception.InvalidRecurrenceRule }
-
-        let end: EKRecurrenceEnd?
-        if let endDate = endDate {
-            end = EKRecurrenceEnd(endDate: endDate)
-        } else if let count = count {
-            end = EKRecurrenceEnd(occurrenceCount: count)
-        } else {
-            end = nil
-        }
-
-        if daysOfTheMonth != nil || daysOfTheWeek != nil || daysOfTheYear != nil || monthsOfTheYear != nil || weeksOfTheYear != nil || positions != nil {
-            return EKRecurrenceRule(recurrenceWithFrequency: frequency, interval: interval, daysOfTheWeek: daysOfTheWeek, daysOfTheMonth: daysOfTheMonth, monthsOfTheYear: monthsOfTheYear, weeksOfTheYear: weeksOfTheYear, daysOfTheYear: daysOfTheYear, setPositions: positions, end: end)
-        } else {
-            return EKRecurrenceRule(recurrenceWithFrequency: frequency, interval: interval, end: end)
-        }
+            .stringByReplacingOccurrencesOfString("\\n", withString: "\n")
     }
 
     /// Generates an `EKEvent` from this object.
