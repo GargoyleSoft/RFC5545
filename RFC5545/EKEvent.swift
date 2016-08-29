@@ -88,22 +88,15 @@ public extension EKEvent {
     public func rfc5545(uid uid: String? = nil) -> String {
         var lines: [String] = ["BEGIN:VEVENT"]
 
+        lines += super.rfc5545()
+
         if let uid = uid {
             lines.append("UID:\(uid)")
         } else {
             lines.append("UID:\(NSUUID().UUIDString)")
         }
 
-        let ctime = creationDate ?? NSDate()
-
         let dateFormat: Rfc5545DateFormat = timeZone == nil ? .floating : .utc
-
-        lines.append("CREATED:\(ctime.rfc5545(format: dateFormat))")
-        lines.append("DTSTAMP:\(ctime.rfc5545(format: dateFormat))")
-
-        if let lastModifiedDate = lastModifiedDate {
-            lines.append("LAST-MODIFIED:\(lastModifiedDate.rfc5545(format: dateFormat))")
-        }
 
         if allDay {
             lines.append("DTSTART;VALUE=DATE:\(startDate.rfc5545(format: .day))")
@@ -115,48 +108,17 @@ public extension EKEvent {
 
         let ws = NSCharacterSet.whitespaceAndNewlineCharacterSet()
 
-        let summary = title.stringByTrimmingCharactersInSet(ws)
-        if !summary.isEmpty {
-            lines.append("SUMMARY:\(escapeText(summary))")
-        }
-
-        if let notes = notes?.stringByTrimmingCharactersInSet(ws) where !notes.isEmpty {
-            lines.append("DESCRIPTION:\(escapeText(notes))")
-        }
-
         if let location = location?.stringByTrimmingCharactersInSet(ws) where !location.isEmpty {
-            lines.append("LOCATION:\(escapeText(location))")
-
+            // Remember super already wrote out the LOCATION line so don't repeat it here
             if let structuredLocation = structuredLocation, let geo = structuredLocation.geoLocation {
                 lines.append("X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:AUTOMATIC")
                 lines.append("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\(escapeText(location));X-APPLE-RADIUS=\(structuredLocation.radius);X-TITLE=\(escapeText(structuredLocation.title)):geo:\(geo.coordinate.latitude),\(geo.coordinate.longitude)")
             }
         }
 
-        if let url = URL, let path = url.path {
-            // Apple will actually give us a non-null URL which is empty!
-            let trimmed = path.stringByTrimmingCharactersInSet(ws)
-            if !trimmed.isEmpty {
-                lines.append("URL:\(escapeText(trimmed))")
-            }
-        }
-
-        if let recurrenceRules = recurrenceRules {
-            if isDetached {
-                lines.append("RECURRENCE-ID:\(occurrenceDate.rfc5545(format: .utc))")
-            }
-
-            recurrenceRules.forEach {
-                lines.append($0.rfc5545())
-            }
-        }
-
-        alarms?.forEach {
-            lines += $0.rfc5545()
-        }
-
-        attendees?.forEach {
-            lines.append($0.rfc5545())
+        // Remember super already wrote out the RRULE line so don't repeat it here
+        if hasRecurrenceRules && isDetached {
+            lines.append("RECURRENCE-ID:\(occurrenceDate.rfc5545(format: .utc))")
         }
 
         lines.append("END:VEVENT")

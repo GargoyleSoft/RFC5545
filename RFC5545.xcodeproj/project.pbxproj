@@ -15,6 +15,7 @@
 		D292856A1D72427700421872 /* EKRecurrenceRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29285691D72427700421872 /* EKRecurrenceRule.swift */; };
 		D292856C1D72944300421872 /* EKParticipant.swift in Sources */ = {isa = PBXBuildFile; fileRef = D292856B1D72944300421872 /* EKParticipant.swift */; };
 		D2DB82FD1D7419D7001FE40C /* EKReminder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2DB82FC1D7419D7001FE40C /* EKReminder.swift */; };
+		D2DB82FF1D74218C001FE40C /* EKCalendarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2DB82FE1D74218C001FE40C /* EKCalendarItem.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		D29285691D72427700421872 /* EKRecurrenceRule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EKRecurrenceRule.swift; sourceTree = "<group>"; };
 		D292856B1D72944300421872 /* EKParticipant.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EKParticipant.swift; sourceTree = "<group>"; };
 		D2DB82FC1D7419D7001FE40C /* EKReminder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EKReminder.swift; sourceTree = "<group>"; };
+		D2DB82FE1D74218C001FE40C /* EKCalendarItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EKCalendarItem.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +71,7 @@
 				D29285591D72366700421872 /* RFC5545.h */,
 				D29285631D7236B200421872 /* RFC5545.swift */,
 				D2DB82FC1D7419D7001FE40C /* EKReminder.swift */,
+				D2DB82FE1D74218C001FE40C /* EKCalendarItem.swift */,
 			);
 			path = RFC5545;
 			sourceTree = "<group>";
@@ -151,6 +154,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D2DB82FF1D74218C001FE40C /* EKCalendarItem.swift in Sources */,
 				D29285641D7236B200421872 /* RFC5545.swift in Sources */,
 				D29285661D723F5600421872 /* EKAlarm.swift in Sources */,
 				D29285681D723F8500421872 /* NSDate.swift in Sources */,
