@@ -100,7 +100,6 @@ func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Boo
         dateStr = str
     }
 
-
     let needsTime: Bool
     if let value = options["VALUE"] {
         needsTime = value != "DATE"

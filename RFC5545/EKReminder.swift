@@ -56,6 +56,6 @@ public extension EKReminder {
 
         return lines.map {
             foldLine($0)
-            }.joinWithSeparator("\r\n")
+        }.joinWithSeparator("\r\n")
     }
 }

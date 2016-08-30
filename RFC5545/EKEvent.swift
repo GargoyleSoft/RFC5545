@@ -25,52 +25,8 @@
 import Foundation
 import EventKit
 
-/**
- *  Escapes the TEXT type blocks to add the \ characters that as needed
- *
- *  - Parameter text: The text to escape.
- *
- *  - SeeAlso: [RFC5545 TEXT](https://tools.ietf.org/html/rfc5545#section-3.3.11)
- *
- *  - Returns: The escaped text.
- */
-func escapeText(text: String) -> String {
-    return text
-        .stringByReplacingOccurrencesOfString("\\", withString: "\\\\")
-        .stringByReplacingOccurrencesOfString(";", withString: "\\;")
-        .stringByReplacingOccurrencesOfString(",", withString: "\\,")
-        .stringByReplacingOccurrencesOfString("\n", withString: "\\n")
-}
 
-/**
- *  Folds lines longer than 75 characters
- *
- *  - Parameter line: The line to fold
- *
- *  - SeeAlso: [RFC5545 Content Lines](https://tools.ietf.org/html/rfc5545#section-3.1)
- *
- *  - Returns: The folded text
- */
-func foldLine(line: String) -> String {
-    var lines: [String] = []
-    var start = line.startIndex
-    let endIndex = line.endIndex
 
-    let end = start.advancedBy(75, limit: endIndex)
-    lines.append(line.substringWithRange(start..<end))
-    start = end
-
-    while start != endIndex {
-        // Note we use 74, instead of 75, because we have to account for the extra space we're adding
-        let end = start.advancedBy(74, limit: endIndex)
-
-        lines.append(" " + line.substringWithRange(start..<end))
-
-        start = end
-    }
-
-    return lines.joinWithSeparator("\r\n")
-}
 
 public extension EKEvent {
     /**
@@ -95,12 +51,11 @@ public extension EKEvent {
 
         let ws = NSCharacterSet.whitespaceAndNewlineCharacterSet()
 
-        if let location = location?.stringByTrimmingCharactersInSet(ws) where !location.isEmpty {
-            // Remember super already wrote out the LOCATION line so don't repeat it here
-            if let structuredLocation = structuredLocation, let geo = structuredLocation.geoLocation {
-                lines.append("X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:AUTOMATIC")
-                lines.append("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\(escapeText(location));X-APPLE-RADIUS=\(structuredLocation.radius);X-TITLE=\(escapeText(structuredLocation.title)):geo:\(geo.coordinate.latitude),\(geo.coordinate.longitude)")
-            }
+        // Remember super already wrote out the LOCATION line so don't repeat it here
+        if let location = location?.stringByTrimmingCharactersInSet(ws) where !location.isEmpty,
+            let structuredLocation = structuredLocation, let geo = structuredLocation.geoLocation {
+            lines.append("X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:AUTOMATIC")
+            lines.append("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\(escapeText(location));X-APPLE-RADIUS=\(structuredLocation.radius);X-TITLE=\(escapeText(structuredLocation.title)):geo:\(geo.coordinate.latitude),\(geo.coordinate.longitude)")
         }
 
         if hasRecurrenceRules && isDetached {
@@ -119,8 +74,10 @@ public extension EKEvent {
     /**
      *  Converts the RFC5545 text block to an `EKEvent` object.
      *
-     *  - Warning: Not all RFC5545 elements are convertible.  For example, iOS can't set the Organizer, nor does it handle
-     *    the WKST property to set the start of the week.
+     *  - Important: Not all RFC5545 elements are convertible.  For example:
+     *       - iOS can't set the Organizer
+     *       - iOS can't set the UID
+     *       - RRULE doesn't support the WKST property
      *
      *  - Parameter rfc5545: The block of text to parse.
      *  - Parameter store: The `EKEventStore` to use when creating the event.

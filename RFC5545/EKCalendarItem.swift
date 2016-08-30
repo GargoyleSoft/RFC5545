@@ -80,4 +80,52 @@ extension EKCalendarItem {
 
         return lines
     }
+
+    /**
+     *  Folds lines longer than 75 characters
+     *
+     *  - Parameter line: The line to fold
+     *
+     *  - SeeAlso: [RFC5545 Content Lines](https://tools.ietf.org/html/rfc5545#section-3.1)
+     *
+     *  - Returns: The folded text
+     */
+    func foldLine(line: String) -> String {
+        var lines: [String] = []
+        var start = line.startIndex
+        let endIndex = line.endIndex
+
+        let end = start.advancedBy(75, limit: endIndex)
+        lines.append(line.substringWithRange(start..<end))
+        start = end
+
+        while start != endIndex {
+            // Note we use 74, instead of 75, because we have to account for the extra space we're adding
+            let end = start.advancedBy(74, limit: endIndex)
+
+            lines.append(" " + line.substringWithRange(start..<end))
+            
+            start = end
+        }
+        
+        return lines.joinWithSeparator("\r\n")
+    }
+
+    /**
+     *  Escapes the TEXT type blocks to add the \ characters as needed
+     *
+     *  - Parameter text: The text to escape.
+     *
+     *  - SeeAlso: [RFC5545 TEXT](https://tools.ietf.org/html/rfc5545#section-3.3.11)
+     *
+     *  - Returns: The escaped text.
+     */
+    func escapeText(text: String) -> String {
+        return text
+            .stringByReplacingOccurrencesOfString("\\", withString: "\\\\")
+            .stringByReplacingOccurrencesOfString(";", withString: "\\;")
+            .stringByReplacingOccurrencesOfString(",", withString: "\\,")
+            .stringByReplacingOccurrencesOfString("\n", withString: "\\n")
+    }
+
 }
