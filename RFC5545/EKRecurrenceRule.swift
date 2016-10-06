@@ -273,7 +273,7 @@ extension EKRecurrenceRule {
                 positions = try allValues(lessThan: 367, csv: value)
 
             default:
-                throw RFC5545Exception.unsupportedRecurrenceProperty
+                throw RFC5545Exception.unsupportedRecurrenceProperty(key)
             }
         }
 

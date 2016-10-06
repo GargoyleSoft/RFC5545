@@ -26,12 +26,10 @@ import Foundation
 import EventKit
 
 public enum RFC5545Exception : Error {
-    case missingStartDate
-    case missingEndDate
-    case missingSummary
+    case missing(String)
     case invalidRecurrenceRule
     case invalidDateFormat
-    case unsupportedRecurrenceProperty
+    case unsupportedRecurrenceProperty(String)
 }
 
 /// An object representing an RFC5545 compatible date.  The full RFC5545 spec is *not* implemented here.
@@ -90,7 +88,7 @@ class RFC5545 {
         }
 
         guard startDate != nil else {
-            throw RFC5545Exception.missingStartDate
+            throw RFC5545Exception.missing("DTSTART")
         }
 
         if exclusions!.isEmpty {
