@@ -36,12 +36,12 @@ import EventKit
  *
  * - Returns: An array of `Int`
  */
-private func allValues(lessThan lessThan: Int, csv: String) throws -> [Int] {
+private func allValues(lessThan: Int, csv: String) throws -> [Int] {
     var ret: [Int] = []
 
-    for dayNum in csv.componentsSeparatedByString(",") {
-        guard let num = Int(dayNum) where abs(num) < lessThan else {
-            throw RFC5545Exception.InvalidRecurrenceRule
+    for dayNum in csv.components(separatedBy: ",") {
+        guard let num = Int(dayNum) , abs(num) < lessThan else {
+            throw RFC5545Exception.invalidRecurrenceRule
         }
 
         ret.append(num)
@@ -62,13 +62,13 @@ extension EKRecurrenceRule {
     func rfc5545() -> String {
         let freq: String
         switch frequency {
-        case .Daily:
+        case .daily:
             freq = "DAILY"
-        case .Monthly:
+        case .monthly:
             freq = "MONTHLY"
-        case .Weekly:
+        case .weekly:
             freq = "WEEKLY"
-        case .Yearly:
+        case .yearly:
             freq = "YEARLY"
         }
 
@@ -128,11 +128,11 @@ extension EKRecurrenceRule {
      */
     convenience init(rrule: String) throws {
         // Make sure it's not just the RRULE: part
-        guard rrule.characters.count > 6 else { throw RFC5545Exception.InvalidRecurrenceRule }
+        guard rrule.characters.count > 6 else { throw RFC5545Exception.invalidRecurrenceRule }
 
         var foundUntilOrCount = false
         var frequency: EKRecurrenceFrequency?
-        var endDate: NSDate?
+        var endDate: Date?
         var count: Int?
         var interval: Int?
         var daysOfTheWeek: [EKRecurrenceDayOfWeek]?
@@ -142,12 +142,12 @@ extension EKRecurrenceRule {
         var daysOfTheYear: [Int]?
         var positions: [Int]?
 
-        let index = rrule.startIndex.advancedBy(6)
-        for part in rrule.substringFromIndex(index).componentsSeparatedByString(";") {
-            let pair = part.componentsSeparatedByString("=")
-            guard pair.count == 2 else { throw RFC5545Exception.InvalidRecurrenceRule }
+        let index = rrule.characters.index(rrule.startIndex, offsetBy: 6)
+        for part in rrule.substring(from: index).components(separatedBy: ";") {
+            let pair = part.components(separatedBy: "=")
+            guard pair.count == 2 else { throw RFC5545Exception.invalidRecurrenceRule }
 
-            let key = pair[0].uppercaseString
+            let key = pair[0].uppercased()
 
             if key.hasPrefix("X-") {
                 // TODO: Save all of these somewhere
@@ -158,19 +158,19 @@ extension EKRecurrenceRule {
 
             switch key {
                 case "FREQ":
-                    guard frequency == nil else { throw RFC5545Exception.InvalidRecurrenceRule }
+                    guard frequency == nil else { throw RFC5545Exception.invalidRecurrenceRule }
 
                     switch value {
-                    case "DAILY": frequency = .Daily
-                    case "MONTHLY": frequency = .Monthly
-                    case "WEEKLY": frequency = .Weekly
-                    case "YEARLY": frequency = .Yearly
+                    case "DAILY": frequency = .daily
+                    case "MONTHLY": frequency = .monthly
+                    case "WEEKLY": frequency = .weekly
+                    case "YEARLY": frequency = .yearly
                     case "SECONDLY", "MINUTELY", "HOURLY": break
-                    default: throw RFC5545Exception.InvalidRecurrenceRule
+                    default: throw RFC5545Exception.invalidRecurrenceRule
                 }
 
             case "UNTIL":
-                guard foundUntilOrCount == false else { throw RFC5545Exception.InvalidRecurrenceRule }
+                guard foundUntilOrCount == false else { throw RFC5545Exception.invalidRecurrenceRule }
 
                 do {
                     let dateInfo = try parseDateString(value)
@@ -181,65 +181,71 @@ extension EKRecurrenceRule {
                     var month = 0
                     var day = 0
 
-                    var args: [CVarArgType] = []
+                    var args: [CVarArg] = []
 
-                    withUnsafeMutablePointers(&year, &month, &day) {
-                        y, m, d in
-                        args.append(y)
-                        args.append(m)
-                        args.append(d)
+                    withUnsafeMutablePointer(to: &year) {
+                        y in
+                        withUnsafeMutablePointer(to: &month) {
+                            m in
+                            withUnsafeMutablePointer(to: &day) {
+                                d in
+                                args.append(y)
+                                args.append(m)
+                                args.append(d)
+                            }
+                        }
                     }
 
                     if vsscanf(value, "%4d%2d%2d", getVaList(args)) == 3 {
-                        let components = NSDateComponents()
+                        var components = DateComponents()
                         components.year = year
                         components.month = month
                         components.day = day
 
                         // This is bad, because we don't know the timezone...
-                        endDate = NSCalendar.currentCalendar().dateFromComponents(components)!
+                        endDate = Calendar.current.date(from: components)!
                     }
                 }
 
                 if endDate == nil {
-                    throw RFC5545Exception.InvalidRecurrenceRule
+                    throw RFC5545Exception.invalidRecurrenceRule
                 }
                 
                 foundUntilOrCount = true
 
             case "COUNT":
-                guard foundUntilOrCount == false, let ival = Int(value) else { throw RFC5545Exception.InvalidRecurrenceRule }
+                guard foundUntilOrCount == false, let ival = Int(value) else { throw RFC5545Exception.invalidRecurrenceRule }
                 count = ival
 
                 foundUntilOrCount = true
 
             case "INTERVAL":
-                guard interval == nil, let ival = Int(value) else { throw RFC5545Exception.InvalidRecurrenceRule }
+                guard interval == nil, let ival = Int(value) else { throw RFC5545Exception.invalidRecurrenceRule }
                 interval = ival
 
             case "BYDAY":
-                guard daysOfTheWeek == nil else { throw RFC5545Exception.InvalidRecurrenceRule }
+                guard daysOfTheWeek == nil else { throw RFC5545Exception.invalidRecurrenceRule }
 
                 daysOfTheWeek = []
 
                 let weekday: [String : EKWeekday] = [
-                    "SU" : .Sunday,
-                    "MO" : .Monday,
-                    "TU" : .Tuesday,
-                    "WE" : .Wednesday,
-                    "TH" : .Thursday,
-                    "FR" : .Friday,
-                    "SA" : .Saturday
+                    "SU" : .sunday,
+                    "MO" : .monday,
+                    "TU" : .tuesday,
+                    "WE" : .wednesday,
+                    "TH" : .thursday,
+                    "FR" : .friday,
+                    "SA" : .saturday
                 ]
 
-                for day in value.componentsSeparatedByString(",") {
+                for day in value.components(separatedBy: ",") {
                     let dayStr: String
                     var num = 0
 
                     if day.characters.count > 2 {
-                        let index = day.endIndex.advancedBy(-2)
-                        dayStr = day.substringFromIndex(index)
-                        num = Int(day.substringToIndex(index)) ?? 0
+                        let index = day.characters.index(day.endIndex, offsetBy: -2)
+                        dayStr = day.substring(from: index)
+                        num = Int(day.substring(to: index)) ?? 0
                     } else {
                         dayStr = day
                     }
@@ -250,67 +256,67 @@ extension EKRecurrenceRule {
                 }
 
             case "BYMONTHDAY":
-                guard daysOfTheMonth == nil else { throw RFC5545Exception.InvalidRecurrenceRule }
+                guard daysOfTheMonth == nil else { throw RFC5545Exception.invalidRecurrenceRule }
                 daysOfTheMonth = try allValues(lessThan: 32, csv: value)
 
             case "BYYEARDAY":
-                guard daysOfTheYear == nil else { throw RFC5545Exception.InvalidRecurrenceRule }
+                guard daysOfTheYear == nil else { throw RFC5545Exception.invalidRecurrenceRule }
                 daysOfTheYear = try allValues(lessThan: 367, csv: value)
 
             case "BYWEEKNO":
-                guard weeksOfTheYear == nil else { throw RFC5545Exception.InvalidRecurrenceRule }
+                guard weeksOfTheYear == nil else { throw RFC5545Exception.invalidRecurrenceRule }
                 weeksOfTheYear = try allValues(lessThan: 54, csv: value)
 
             case "BYMONTH":
-                guard monthsOfTheYear == nil else { throw RFC5545Exception.InvalidRecurrenceRule }
+                guard monthsOfTheYear == nil else { throw RFC5545Exception.invalidRecurrenceRule }
                 monthsOfTheYear = try allValues(lessThan: 13, csv: value)
 
             case "BYSETPOS":
-                guard positions == nil else { throw RFC5545Exception.InvalidRecurrenceRule }
+                guard positions == nil else { throw RFC5545Exception.invalidRecurrenceRule }
                 positions = try allValues(lessThan: 367, csv: value)
 
             default:
-                throw RFC5545Exception.UnsupportedRecurrenceProperty
+                throw RFC5545Exception.unsupportedRecurrenceProperty
             }
         }
 
-        guard let freq = frequency else { throw RFC5545Exception.InvalidRecurrenceRule }
+        guard let freq = frequency else { throw RFC5545Exception.invalidRecurrenceRule }
 
         // The BYDAY rule part MUST NOT be specified with a numeric value when the FREQ rule part is
         // not set to MONTHLY or YEARLY.
-        if let daysOfTheWeek = daysOfTheWeek where freq != .Monthly && freq != .Yearly {
+        if let daysOfTheWeek = daysOfTheWeek , freq != .monthly && freq != .yearly {
             for day in daysOfTheWeek {
                 if day.weekNumber != 0 {
-                    throw RFC5545Exception.InvalidRecurrenceRule
+                    throw RFC5545Exception.invalidRecurrenceRule
                 }
             }
         }
 
         // The BYMONTHDAY rule part MUST NOT be specified when the FREQ rule part is set to WEEKLY.
-        if daysOfTheMonth != nil && freq == .Weekly {
-            throw RFC5545Exception.InvalidRecurrenceRule
+        if daysOfTheMonth != nil && freq == .weekly {
+            throw RFC5545Exception.invalidRecurrenceRule
         }
 
         // The BYYEARDAY rule part MUST NOT be specified when the FREQ rule part is set to DAILY, WEEKLY, or MONTHLY.
-        if daysOfTheYear != nil && (freq == .Daily || freq == .Weekly || freq == .Monthly) {
-            throw RFC5545Exception.InvalidRecurrenceRule
+        if daysOfTheYear != nil && (freq == .daily || freq == .weekly || freq == .monthly) {
+            throw RFC5545Exception.invalidRecurrenceRule
         }
 
         // BYWEEKNO MUST NOT be used when the FREQ rule part is set to anything other than YEARLY
-        if weeksOfTheYear != nil && freq != .Yearly {
-            throw RFC5545Exception.InvalidRecurrenceRule
+        if weeksOfTheYear != nil && freq != .yearly {
+            throw RFC5545Exception.invalidRecurrenceRule
         }
 
         let nonPositionAllNil = daysOfTheYear == nil && daysOfTheMonth == nil && daysOfTheWeek == nil && weeksOfTheYear == nil && monthsOfTheYear == nil
 
         // If BYSETPOS is used, one of the other BY* rules must be used as well
         if positions != nil && nonPositionAllNil {
-            throw RFC5545Exception.InvalidRecurrenceRule
+            throw RFC5545Exception.invalidRecurrenceRule
         }
 
         let end: EKRecurrenceEnd?
         if let endDate = endDate {
-            end = EKRecurrenceEnd(endDate: endDate)
+            end = EKRecurrenceEnd(end: endDate)
         } else if let count = count {
             end = EKRecurrenceEnd(occurrenceCount: count)
         } else {
@@ -319,11 +325,11 @@ extension EKRecurrenceRule {
 
 
         if nonPositionAllNil && positions == nil {
-            self.init(recurrenceWithFrequency: freq, interval: interval ?? 1, end: end)
+            self.init(recurrenceWith: freq, interval: interval ?? 1, end: end)
         } else {
             // TODO: This needs to handle multiple BY* rules as defined by the RFC spec.  Maybe the EKRecurrenceRule
             // constructor does it for us, but it needs to be tested.
-            self.init(recurrenceWithFrequency: freq, interval: interval ?? 1, daysOfTheWeek: daysOfTheWeek, daysOfTheMonth: daysOfTheMonth, monthsOfTheYear: monthsOfTheYear, weeksOfTheYear: weeksOfTheYear, daysOfTheYear: daysOfTheYear, setPositions: positions, end: end)
+            self.init(recurrenceWith: freq, interval: interval ?? 1, daysOfTheWeek: daysOfTheWeek, daysOfTheMonth: daysOfTheMonth as [NSNumber]?, monthsOfTheYear: monthsOfTheYear as [NSNumber]?, weeksOfTheYear: weeksOfTheYear as [NSNumber]?, daysOfTheYear: daysOfTheYear as [NSNumber]?, setPositions: positions as [NSNumber]?, end: end)
         }
     }
 }

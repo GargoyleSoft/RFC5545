@@ -31,18 +31,18 @@ public extension EKReminder {
      *
      * - SeeAlso: [RFC5545 To-Do Component](https://tools.ietf.org/html/rfc5545#section-3.6.2)
      */
-    public func rfc5545(calendar cal: NSCalendar? = nil) -> String {
+    public func rfc5545(calendar cal: Calendar? = nil) -> String {
         var lines = ["BEGIN:VTODO"]
 
-        let calendar = cal ?? NSCalendar.currentCalendar()
+        let calendar = cal ?? Calendar.current
 
         if let startDateComponents = startDateComponents
-            where !(startDateComponents.hour == 0 && startDateComponents.minute == 0 && startDateComponents.second == 0),
-            let start = calendar.dateFromComponents(startDateComponents) {
+            , !(startDateComponents.hour == 0 && startDateComponents.minute == 0 && startDateComponents.second == 0),
+            let start = calendar.date(from: startDateComponents) {
             lines.append("DTSTART:\(start.rfc5545(format: .utc))")
         }
 
-        if let dueDateComponents = dueDateComponents, let due = calendar.dateFromComponents(dueDateComponents) {
+        if let dueDateComponents = dueDateComponents, let due = calendar.date(from: dueDateComponents) {
             lines.append("DUE:\(due.rfc5545(format: .utc))")
         }
 
@@ -55,7 +55,7 @@ public extension EKReminder {
         lines.append("END:VTODO")
 
         return lines.map {
-            foldLine($0)
-        }.joinWithSeparator("\r\n")
+            fold(line: $0)
+        }.joined(separator: "\r\n")
     }
 }

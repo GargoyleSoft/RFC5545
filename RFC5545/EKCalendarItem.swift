@@ -29,11 +29,11 @@ extension EKCalendarItem {
     func rfc5545Base() -> [String] {
         var lines: [String] = []
 
-        let ctime = creationDate ?? NSDate()
+        let ctime = creationDate ?? Date()
 
         let dateFormat: Rfc5545DateFormat = timeZone == nil ? .floating : .utc
 
-        lines.append("UID:\(escapeText(calendarItemExternalIdentifier))")
+        lines.append("UID:\(escape(text: calendarItemExternalIdentifier))")
         lines.append("CREATED:\(ctime.rfc5545(format: dateFormat))")
         lines.append("DTSTAMP:\(ctime.rfc5545(format: dateFormat))")
 
@@ -41,26 +41,27 @@ extension EKCalendarItem {
             lines.append("LAST-MODIFIED:\(lastModifiedDate.rfc5545(format: dateFormat))")
         }
 
-        let ws = NSCharacterSet.whitespaceAndNewlineCharacterSet()
+        let ws = CharacterSet.whitespacesAndNewlines
 
-        if let location = location?.stringByTrimmingCharactersInSet(ws) where !location.isEmpty {
-            lines.append("LOCATION:\(escapeText(location))")
+        if let location = location?.trimmingCharacters(in: ws), !location.isEmpty {
+            lines.append("LOCATION:\(escape(text: location))")
         }
 
-        let summary = title.stringByTrimmingCharactersInSet(ws)
+        let summary = title.trimmingCharacters(in: ws)
         if !summary.isEmpty {
-            lines.append("SUMMARY:\(escapeText(summary))")
+            lines.append("SUMMARY:\(escape(text: summary))")
         }
 
-        if let notes = notes?.stringByTrimmingCharactersInSet(ws) where !notes.isEmpty {
-            lines.append("DESCRIPTION:\(escapeText(notes))")
+        if let notes = notes?.trimmingCharacters(in: ws), !notes.isEmpty {
+            lines.append("DESCRIPTION:\(escape(text: notes))")
         }
 
-        if let url = URL, let path = url.path {
+        if let url = url {
+            let path = url.path.trimmingCharacters(in: ws)
+
             // Apple will actually give us a non-null URL which is empty!
-            let trimmed = path.stringByTrimmingCharactersInSet(ws)
-            if !trimmed.isEmpty {
-                lines.append("URL:\(escapeText(trimmed))")
+            if !path.isEmpty {
+                lines.append("URL:\(escape(text: path))")
             }
         }
 
@@ -90,25 +91,25 @@ extension EKCalendarItem {
      *
      *  - Returns: The folded text
      */
-    func foldLine(line: String) -> String {
+    func fold(line: String) -> String {
         var lines: [String] = []
         var start = line.startIndex
         let endIndex = line.endIndex
 
-        let end = start.advancedBy(75, limit: endIndex)
-        lines.append(line.substringWithRange(start..<end))
+        var end = line.characters.index(start, offsetBy: 75, limitedBy: endIndex)!
+        lines.append(line.substring(with: start..<end))
         start = end
 
         while start != endIndex {
             // Note we use 74, instead of 75, because we have to account for the extra space we're adding
-            let end = start.advancedBy(74, limit: endIndex)
+            end = line.characters.index(start, offsetBy: 74, limitedBy: endIndex)!
 
-            lines.append(" " + line.substringWithRange(start..<end))
+            lines.append(" " + line.substring(with: start..<end))
             
             start = end
         }
         
-        return lines.joinWithSeparator("\r\n")
+        return lines.joined(separator: "\r\n")
     }
 
     /**
@@ -120,12 +121,12 @@ extension EKCalendarItem {
      *
      *  - Returns: The escaped text.
      */
-    func escapeText(text: String) -> String {
+    func escape(text: String) -> String {
         return text
-            .stringByReplacingOccurrencesOfString("\\", withString: "\\\\")
-            .stringByReplacingOccurrencesOfString(";", withString: "\\;")
-            .stringByReplacingOccurrencesOfString(",", withString: "\\,")
-            .stringByReplacingOccurrencesOfString("\n", withString: "\\n")
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: ";", with: "\\;")
+            .replacingOccurrences(of: ",", with: "\\,")
+            .replacingOccurrences(of: "\n", with: "\\n")
     }
 
 }

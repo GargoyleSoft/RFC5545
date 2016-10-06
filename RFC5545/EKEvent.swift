@@ -41,7 +41,7 @@ public extension EKEvent {
 
         let dateFormat: Rfc5545DateFormat = timeZone == nil ? .floating : .utc
 
-        if allDay {
+        if isAllDay {
             lines.append("DTSTART;VALUE=DATE:\(startDate.rfc5545(format: .day))")
             lines.append("DTEND;VALUE=DATE:\(endDate.rfc5545(format: .day))")
         } else {
@@ -49,13 +49,13 @@ public extension EKEvent {
             lines.append("DTEND:\(endDate.rfc5545(format: dateFormat))")
         }
 
-        let ws = NSCharacterSet.whitespaceAndNewlineCharacterSet()
+        let ws = CharacterSet.whitespacesAndNewlines
 
         // Remember super already wrote out the LOCATION line so don't repeat it here
-        if let location = location?.stringByTrimmingCharactersInSet(ws) where !location.isEmpty,
+        if let location = location?.trimmingCharacters(in: ws) , !location.isEmpty,
             let structuredLocation = structuredLocation, let geo = structuredLocation.geoLocation {
             lines.append("X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:AUTOMATIC")
-            lines.append("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\(escapeText(location));X-APPLE-RADIUS=\(structuredLocation.radius);X-TITLE=\(escapeText(structuredLocation.title)):geo:\(geo.coordinate.latitude),\(geo.coordinate.longitude)")
+            lines.append("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\(escape(text: location));X-APPLE-RADIUS=\(structuredLocation.radius);X-TITLE=\(escape(text: structuredLocation.title)):geo:\(geo.coordinate.latitude),\(geo.coordinate.longitude)")
         }
 
         if hasRecurrenceRules && isDetached {
@@ -67,8 +67,8 @@ public extension EKEvent {
         lines.append("END:VEVENT")
 
         return lines.map {
-            foldLine($0)
-        }.joinWithSeparator("\r\n")
+            fold(line: $0)
+        }.joined(separator: "\r\n")
     }
 
     /**
@@ -88,7 +88,7 @@ public extension EKEvent {
      *
      *  - Throws: An `RFC5545Exception`
      */
-    public func parse(rfc5545: String, store: EKEventStore, calendar: EKCalendar? = nil) throws -> (event: EKEvent, exclusions: [NSDate]?) {
+    public func parse(rfc5545: String, store: EKEventStore, calendar: EKCalendar? = nil) throws -> (event: EKEvent, exclusions: [Date]?) {
         let rfc = try RFC5545(string: rfc5545)
         
         return (event: rfc.EKEvent(store, calendar: calendar), exclusions: rfc.exclusions)

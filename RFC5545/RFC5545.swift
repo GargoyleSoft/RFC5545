@@ -25,33 +25,33 @@
 import Foundation
 import EventKit
 
-public enum RFC5545Exception : ErrorType {
-    case MissingStartDate
-    case MissingEndDate
-    case MissingSummary
-    case InvalidRecurrenceRule
-    case InvalidDateFormat
-    case UnsupportedRecurrenceProperty
+public enum RFC5545Exception : Error {
+    case missingStartDate
+    case missingEndDate
+    case missingSummary
+    case invalidRecurrenceRule
+    case invalidDateFormat
+    case unsupportedRecurrenceProperty
 }
 
 /// An object representing an RFC5545 compatible date.  The full RFC5545 spec is *not* implemented here.
 /// This only represents those properties which relate to an `EKEvent`.
 class RFC5545 {
-    var startDate: NSDate!
-    var endDate: NSDate!
+    var startDate: Date!
+    var endDate: Date!
     var summary: String!
     var notes: String?
     var location: String?
     var recurrenceRules: [EKRecurrenceRule]?
-    var url: NSURL?
-    var exclusions: [NSDate]?
+    var url: URL?
+    var exclusions: [Date]?
     var allDay = false
 
     init(string: String) throws {
         let regex = try! NSRegularExpression(pattern: "\r\n[ \t]+", options: [])
         let lines = regex
-            .stringByReplacingMatchesInString(string, options: [], range: NSMakeRange(0, string.characters.count), withTemplate: "")
-            .componentsSeparatedByString("\r\n")
+            .stringByReplacingMatches(in: string, options: [], range: NSMakeRange(0, string.characters.count), withTemplate: "")
+            .components(separatedBy: "\r\n")
 
         exclusions = []
         recurrenceRules = []
@@ -70,7 +70,7 @@ class RFC5545 {
                 endHasTimeComponent = dateInfo.hasTimeComponent
             } else if line.hasPrefix("URL:") || line.hasPrefix(("URL;")) {
                 if let text = unescape(text: line, startingAt: 4) {
-                    url = NSURL(string: text)
+                    url = URL(string: text)
                 }
             } else if line.hasPrefix("SUMMARY:") {
                 // This is the Subject of the event
@@ -90,7 +90,7 @@ class RFC5545 {
         }
 
         guard startDate != nil else {
-            throw RFC5545Exception.MissingStartDate
+            throw RFC5545Exception.missingStartDate
         }
 
         if exclusions!.isEmpty {
@@ -113,13 +113,13 @@ class RFC5545 {
                 // For cases where a "VEVENT" calendar component specifies a "DTSTART" property with a DATE
                 // data type but no "DTEND" property, the events non-inclusive end is the end of the calendar
                 // date specified by the "DTSTART" property.
-                let calendar = NSCalendar.currentCalendar()
-                let components = calendar.components([.Era, .Year, .Month, .Day], fromDate: startDate)
+                let calendar = Calendar.current
+                var components = calendar.dateComponents([.era, .year, .month, .day], from: startDate)
                 components.hour = 23
                 components.minute = 59
                 components.second = 59
 
-                endDate = calendar.dateFromComponents(components)
+                endDate = calendar.date(from: components)
             }
         }
     }
@@ -134,15 +134,15 @@ class RFC5545 {
      *
      *  - Returns: The unescaped text or `nil` if there is no text after the indicated start position.
      */
-    private func unescape(text text: String, startingAt: Int) -> String? {
+    fileprivate func unescape(text: String, startingAt: Int) -> String? {
         guard text.characters.count > startingAt else { return nil }
 
         return text
-            .substringFromIndex(text.startIndex.advancedBy(startingAt))
-            .stringByReplacingOccurrencesOfString("\\;", withString: ";")
-            .stringByReplacingOccurrencesOfString("\\,", withString: ",")
-            .stringByReplacingOccurrencesOfString("\\\\", withString: "\\")
-            .stringByReplacingOccurrencesOfString("\\n", withString: "\n")
+            .substring(from: text.characters.index(text.startIndex, offsetBy: startingAt))
+            .replacingOccurrences(of: "\\;", with: ";")
+            .replacingOccurrences(of: "\\,", with: ",")
+            .replacingOccurrences(of: "\\\\", with: "\\")
+            .replacingOccurrences(of: "\\n", with: "\n")
     }
 
     /**
@@ -155,7 +155,7 @@ class RFC5545 {
      *
      *  - Returns: The created event.
      */
-    func EKEvent(store: EKEventStore, calendar: EKCalendar?) -> EventKit.EKEvent {
+    func EKEvent(_ store: EKEventStore, calendar: EKCalendar?) -> EventKit.EKEvent {
         let event = EventKit.EKEvent(eventStore: store)
         event.startDate = startDate
         event.endDate = endDate
@@ -170,8 +170,8 @@ class RFC5545 {
             event.title = title
         }
         
-        event.allDay = allDay
-        event.URL = url
+        event.isAllDay = allDay
+        event.url = url
         
         recurrenceRules?.forEach {
             event.addRecurrenceRule($0)

@@ -30,7 +30,7 @@ enum Rfc5545DateFormat {
     case utc
 }
 
-extension NSDate {
+extension Date {
     /**
      *  Converts an `NSDate` to an RFC5545 formatted DATE-TIME or DATE
      *
@@ -41,7 +41,7 @@ extension NSDate {
      *  - SeeAlso: [RFC5545 DATE](https://tools.ietf.org/html/rfc5545#section-3.3.4)
      *  - SeeAlso: [RFC5545 DATE-TIME](https://tools.ietf.org/html/rfc5545#section-3.3.5)
      */
-    func rfc5545(format format: Rfc5545DateFormat) -> String {
+    func rfc5545(format: Rfc5545DateFormat) -> String {
         var time = time_t(timeIntervalSince1970)
 
         let fmt: String
@@ -61,10 +61,10 @@ extension NSDate {
             count = 17
         }
 
-        var buffer = [Int8](count: count, repeatedValue: 0)
+        var buffer = [Int8](repeating: 0, count: count)
         strftime_l(&buffer, buffer.count, fmt, localtime(&time), nil)
 
-        return String.fromCString(buffer)!
+        return String(cString: buffer)
     }
 }
 
@@ -82,13 +82,13 @@ extension NSDate {
  *
  *  - Note: If a time is not specified in the input, the time of the returned `NSDate` is set to noon.
  */
-func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Bool) {
+func parseDateString(_ str: String) throws -> (date: Date, hasTimeComponent: Bool) {
     var dateStr: String!
     var options: [String : String] = [:]
 
-    let delim = NSCharacterSet(charactersInString: ";:")
-    for param in str.componentsSeparatedByCharactersInSet(delim) {
-        let keyValuePair = param.componentsSeparatedByString("=")
+    let delim = CharacterSet(charactersIn: ";:")
+    for param in str.components(separatedBy: delim) {
+        let keyValuePair = param.components(separatedBy: "=")
         if keyValuePair.count == 1 {
             dateStr = keyValuePair[0]
         } else {
@@ -111,38 +111,51 @@ func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Boo
     var month = 0
     var day = 0
 
-    var args: [CVarArgType] = []
+    var args: [CVarArg] = []
 
-    withUnsafeMutablePointers(&year, &month, &day) {
-        y, m, d in
-        args.append(y)
-        args.append(m)
-        args.append(d)
+    withUnsafeMutablePointer(to: &year) {
+        y in
+        withUnsafeMutablePointer(to: &month) {
+            m in
+            withUnsafeMutablePointer(to: &day) {
+                d in
+                args.append(y)
+                args.append(m)
+                args.append(d)
+            }
+        }
     }
 
-    let components = NSDateComponents()
+    var components = DateComponents()
 
     if needsTime {
         var hour = 0
         var minute = 0
         var second = 0
 
-        withUnsafeMutablePointers(&hour, &minute, &second) {
-            h, m, s in
-            args.append(h)
-            args.append(m)
-            args.append(s)
+        withUnsafeMutablePointer(to: &hour) {
+            h in
+            withUnsafeMutablePointer(to: &minute) {
+                m in
+                withUnsafeMutablePointer(to: &second) {
+                    s in
+
+                    args.append(h)
+                    args.append(m)
+                    args.append(s)
+                }
+            }
         }
 
-        if let tzid = options["TZID"], tz = NSTimeZone(name: tzid) {
+        if let tzid = options["TZID"], let tz = TimeZone(identifier: tzid) {
             components.timeZone = tz
         } else {
-            throw RFC5545Exception.InvalidDateFormat
+            throw RFC5545Exception.invalidDateFormat
         }
 
         if dateStr.characters.last! == "Z" {
-            guard components.timeZone == nil else { throw RFC5545Exception.InvalidDateFormat }
-            components.timeZone = NSTimeZone(forSecondsFromGMT: 0)
+            guard components.timeZone == nil else { throw RFC5545Exception.invalidDateFormat }
+            components.timeZone = TimeZone(secondsFromGMT: 0)
         }
 
         if vsscanf(dateStr, "%4d%2d%2dT%2d%2d%2d", getVaList(args)) == 6 {
@@ -153,7 +166,7 @@ func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Boo
             components.minute = minute
             components.second = second
 
-            if let date = NSCalendar.currentCalendar().dateFromComponents(components) {
+            if let date = Calendar.current.date(from: components) {
                 return (date: date, hasTimeComponent: true)
             }
         }
@@ -162,11 +175,11 @@ func parseDateString(str: String) throws -> (date: NSDate, hasTimeComponent: Boo
         components.month = month
         components.day = day
 
-        if let date = NSCalendar.currentCalendar().dateFromComponents(components) {
+        if let date = Calendar.current.date(from: components) {
             return (date: date, hasTimeComponent: false)
         }
     }
     
-    throw RFC5545Exception.InvalidDateFormat
+    throw RFC5545Exception.invalidDateFormat
 }
 

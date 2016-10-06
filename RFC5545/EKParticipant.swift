@@ -42,21 +42,21 @@ extension EKParticipant {
 
         let type: String
         switch participantType {
-        case .Group: type = "GROUP"
-        case .Person: type = "INDIVIDUAL"
-        case .Resource: type = "RESOURCE"
-        case .Room: type = "ROOM"
-        case .Unknown: type = "UNKNOWN"
+        case .group: type = "GROUP"
+        case .person: type = "INDIVIDUAL"
+        case .resource: type = "RESOURCE"
+        case .room: type = "ROOM"
+        case .unknown: type = "UNKNOWN"
         }
 
         lines.append("CUTYPE=\(type)")
 
         let role: String?
         switch participantRole {
-        case .Chair: role = "CHAIR"
-        case .NonParticipant: role = "NON-PARTICIPANT"
-        case .Optional: role = "OPT-PARTICIPANT"
-        case .Required: role = "REQ-PARTICIPANT"
+        case .chair: role = "CHAIR"
+        case .nonParticipant: role = "NON-PARTICIPANT"
+        case .optional: role = "OPT-PARTICIPANT"
+        case .required: role = "REQ-PARTICIPANT"
         default: role = nil
         }
 
@@ -66,10 +66,10 @@ extension EKParticipant {
 
         let status: String?
         switch participantStatus {
-        case .Accepted: status = "ACCEPTED"
-        case .Declined: status = "DECLINED"
-        case .Delegated: status = "DELEGATED"
-        case .Tentative: status = "TENTATIVE"
+        case .accepted: status = "ACCEPTED"
+        case .declined: status = "DECLINED"
+        case .delegated: status = "DELEGATED"
+        case .tentative: status = "TENTATIVE"
         default: status = nil
         }
         
@@ -77,6 +77,6 @@ extension EKParticipant {
             lines.append("PARTSTAT=\(status)")
         }
 
-        return lines.joinWithSeparator(";")
+        return lines.joined(separator: ";")
     }
 }
