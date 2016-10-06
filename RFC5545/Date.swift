@@ -1,5 +1,5 @@
 //
-//  NSDate.swift
+//  Date.swift
 //
 //  Copyright © 2016 Gargoyle Software, LLC.
 //
