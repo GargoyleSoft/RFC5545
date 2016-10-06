@@ -113,13 +113,7 @@ class RFC5545 {
                 // For cases where a "VEVENT" calendar component specifies a "DTSTART" property with a DATE
                 // data type but no "DTEND" property, the events non-inclusive end is the end of the calendar
                 // date specified by the "DTSTART" property.
-                let calendar = Calendar.current
-                var components = calendar.dateComponents([.era, .year, .month, .day], from: startDate)
-                components.hour = 23
-                components.minute = 59
-                components.second = 59
-
-                endDate = calendar.date(from: components)
+                endDate = Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: startDate)
             }
         }
     }

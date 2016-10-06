@@ -197,10 +197,7 @@ extension EKRecurrenceRule {
                     }
 
                     if vsscanf(value, "%4d%2d%2d", getVaList(args)) == 3 {
-                        var components = DateComponents()
-                        components.year = year
-                        components.month = month
-                        components.day = day
+                        let components = DateComponents(year: year, month: month, day: day)
 
                         // This is bad, because we don't know the timezone...
                         endDate = Calendar.current.date(from: components)!

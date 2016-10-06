@@ -32,7 +32,7 @@ enum Rfc5545DateFormat {
 
 extension Date {
     /**
-     *  Converts an `NSDate` to an RFC5545 formatted DATE-TIME or DATE
+     *  Converts an `Date` to an RFC5545 formatted DATE-TIME or DATE
      *
      *  - Parameter format: The format of date to ouput.
      *
@@ -73,14 +73,14 @@ extension Date {
  *
  *  - Parameter str: The date string to parse.
  *
- *  - Returns: A tuple containing the `NSDate` as well as a `Bool` specifying whether or not there is a time component.
+ *  - Returns: A tuple containing the `Date` as well as a `Bool` specifying whether or not there is a time component.
  *
  *  - Throws: `RFC5545Exception.InvalidDateFormat`: The date is not in a correct format.
  *
  *  - SeeAlso: [RFC5545 Date](https://tools.ietf.org/html/rfc5545#section-3.3.4)
  *  - SeeAlso: [RFC5545 Date-Time](https://tools.ietf.org/html/rfc5545#section-3.3.5)
  *
- *  - Note: If a time is not specified in the input, the time of the returned `NSDate` is set to noon.
+ *  - Note: If a time is not specified in the input, the time of the returned `Date` is set to noon.
  */
 func parseDateString(_ str: String) throws -> (date: Date, hasTimeComponent: Bool) {
     var dateStr: String!
