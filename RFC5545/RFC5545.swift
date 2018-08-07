@@ -48,7 +48,7 @@ class RFC5545 {
     init(string: String) throws {
         let regex = try! NSRegularExpression(pattern: "\r\n[ \t]+", options: [])
         let lines = regex
-            .stringByReplacingMatches(in: string, options: [], range: NSMakeRange(0, string.characters.count), withTemplate: "")
+            .stringByReplacingMatches(in: string, options: [], range: NSMakeRange(0, string.count), withTemplate: "")
             .components(separatedBy: "\r\n")
 
         exclusions = []
@@ -127,10 +127,9 @@ class RFC5545 {
      *  - Returns: The unescaped text or `nil` if there is no text after the indicated start position.
      */
     fileprivate func unescape(text: String, startingAt: Int) -> String? {
-        guard text.characters.count > startingAt else { return nil }
+        guard text.count > startingAt else { return nil }
 
-        return text
-            .substring(from: text.characters.index(text.startIndex, offsetBy: startingAt))
+        return String(text[text.index(text.startIndex, offsetBy: startingAt)...])
             .replacingOccurrences(of: "\\;", with: ";")
             .replacingOccurrences(of: "\\,", with: ",")
             .replacingOccurrences(of: "\\\\", with: "\\")

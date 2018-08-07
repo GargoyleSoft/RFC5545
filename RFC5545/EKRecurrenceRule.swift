@@ -128,7 +128,7 @@ extension EKRecurrenceRule {
      */
     convenience init(rrule: String) throws {
         // Make sure it's not just the RRULE: part
-        guard rrule.characters.count > 6 else { throw RFC5545Exception.invalidRecurrenceRule }
+        guard rrule.count > 6 else { throw RFC5545Exception.invalidRecurrenceRule }
 
         var foundUntilOrCount = false
         var frequency: EKRecurrenceFrequency?
@@ -142,8 +142,8 @@ extension EKRecurrenceRule {
         var daysOfTheYear: [Int]?
         var positions: [Int]?
 
-        let index = rrule.characters.index(rrule.startIndex, offsetBy: 6)
-        for part in rrule.substring(from: index).components(separatedBy: ";") {
+        let index = rrule.index(rrule.startIndex, offsetBy: 6)
+        for part in String(rrule[index...]).components(separatedBy: ";") {
             let pair = part.components(separatedBy: "=")
             guard pair.count == 2 else { throw RFC5545Exception.invalidRecurrenceRule }
 
@@ -239,10 +239,10 @@ extension EKRecurrenceRule {
                     let dayStr: String
                     var num = 0
 
-                    if day.characters.count > 2 {
-                        let index = day.characters.index(day.endIndex, offsetBy: -2)
-                        dayStr = day.substring(from: index)
-                        num = Int(day.substring(to: index)) ?? 0
+                    if day.count > 2 {
+                        let index = day.index(day.endIndex, offsetBy: -2)
+                        dayStr = String(day[index...])
+                        num = Int(day[..<index]) ?? 0
                     } else {
                         dayStr = day
                     }

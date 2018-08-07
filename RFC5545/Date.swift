@@ -153,7 +153,7 @@ func parseDateString(_ str: String) throws -> (date: Date, hasTimeComponent: Boo
             throw RFC5545Exception.invalidDateFormat
         }
 
-        if dateStr.characters.last! == "Z" {
+        if dateStr.last! == "Z" {
             guard components.timeZone == nil else { throw RFC5545Exception.invalidDateFormat }
             components.timeZone = TimeZone(secondsFromGMT: 0)
         }

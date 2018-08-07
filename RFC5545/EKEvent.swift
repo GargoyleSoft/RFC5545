@@ -55,7 +55,7 @@ public extension EKEvent {
         if let location = location?.trimmingCharacters(in: ws) , !location.isEmpty,
             let structuredLocation = structuredLocation, let geo = structuredLocation.geoLocation {
             lines.append("X-APPLE-TRAVEL-ADVISORY-BEHAVIOR:AUTOMATIC")
-            lines.append("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\(escape(text: location));X-APPLE-RADIUS=\(structuredLocation.radius);X-TITLE=\(escape(text: structuredLocation.title)):geo:\(geo.coordinate.latitude),\(geo.coordinate.longitude)")
+            lines.append("X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\(escape(text: location));X-APPLE-RADIUS=\(structuredLocation.radius);X-TITLE=\(escape(text: structuredLocation.title!)):geo:\(geo.coordinate.latitude),\(geo.coordinate.longitude)")
         }
 
         if hasRecurrenceRules && isDetached {

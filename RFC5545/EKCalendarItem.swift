@@ -96,15 +96,15 @@ extension EKCalendarItem {
         var start = line.startIndex
         let endIndex = line.endIndex
 
-        var end = line.characters.index(start, offsetBy: 75, limitedBy: endIndex)!
-        lines.append(line.substring(with: start..<end))
+        var end = line.index(start, offsetBy: 75, limitedBy: endIndex)!
+        lines.append(String(line[start..<end]))
         start = end
 
         while start != endIndex {
             // Note we use 74, instead of 75, because we have to account for the extra space we're adding
-            end = line.characters.index(start, offsetBy: 74, limitedBy: endIndex)!
+            end = line.index(start, offsetBy: 74, limitedBy: endIndex)!
 
-            lines.append(" " + line.substring(with: start..<end))
+            lines.append(" " + String(line[start..<end]))
             
             start = end
         }
