@@ -30,4 +30,6 @@ Converts back and forth between RFC5545 specification (iCalendar/.ics) and Apple
   s.source       = { :git => "https://github.com/GargoyleSoft/RFC5545.git", :tag => "v#{s.version}" }
 
   s.source_files  = "RFC5545"
+
+  s.swift_version = '4.1'
 end
