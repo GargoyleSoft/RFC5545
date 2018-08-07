@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "RFC5545"
-  s.version      = "0.0.1"
+  s.version      = "1.1.0"
   s.summary      = "Convert between RFC5545 and iOS' EKEvent class."
 
   # This description is used to generate tags and improve search results.
